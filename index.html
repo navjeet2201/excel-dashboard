@@ -1,16 +1,17 @@
-html
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Excel Auto-Updating Dashboard</title>
-  <script src="https://sheetjs.com"></script>
-  <script src="https://jsdelivr.net"></script>
+  <!-- Reliable CDN for SheetJS -->
+  <script src="https://cloudflare.com"></script>
+  <!-- Reliable CDN for Chart.js -->
+  <script src="https://cloudflare.com"></script>
   <style>
     body { font-family: system-ui, sans-serif; margin: 2rem; background: #f8fafc; color: #1e293b; }
     .container { max-width: 1000px; margin: auto; }
-    .card { background: white; padding: 1.5rem; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); margin-bottom: 1.5rem; }
+    .card { background: white; padding: 1.5rem; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); margin-bottom: 1.5rem; overflow-x: auto; }
     table { width: 100%; border-collapse: collapse; margin-top: 1rem; }
     th, td { text-align: left; padding: 0.75rem; border-bottom: 1px solid #e2e8f0; }
     th { background: #f1f5f9; }
@@ -34,12 +35,17 @@ html
   <script>
     async function loadExcelDashboard() {
       try {
+        if (typeof XLSX === 'undefined') {
+          throw new Error('Excel library failed to load. Check your internet connection or ad-blocker.');
+        }
+
         const response = await fetch('./data.xlsx?t=' + new Date().getTime());
-        if (!response.ok) throw new Error('Could not fetch data.xlsx');
+        if (!response.ok) throw new Error('Could not find data.xlsx in repository (HTTP ' + response.status + ')');
         
         const arrayBuffer = await response.arrayBuffer();
         const workbook = XLSX.read(arrayBuffer, { type: 'array' });
         
+        // Grab the first sheet
         const firstSheetName = workbook.SheetNames[0];
         const worksheet = workbook.Sheets[firstSheetName];
         const jsonData = XLSX.utils.sheet_to_json(worksheet);
@@ -60,8 +66,8 @@ html
 
     function renderChart(data) {
       const columns = Object.keys(data[0]);
-      const labelColumn = columns[0]; // Uses Column A for labels
-      const valueColumn = columns[1]; // Uses Column B for bar values
+      const labelColumn = columns[0]; // Column A
+      const valueColumn = columns[1]; // Column B
 
       const labels = data.map(row => row[labelColumn]);
       const values = data.map(row => Number(row[valueColumn]) || 0);
@@ -92,7 +98,7 @@ html
       document.getElementById('tableContainer').innerHTML = html;
     }
 
-    loadExcelDashboard();
+    window.addEventListener('DOMContentLoaded', loadExcelDashboard);
   </script>
 </body>
 </html>
