@@ -5,47 +5,57 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Railway Operations Live Dashboard</title>
   <style>
-    body { font-family: system-ui, sans-serif; margin: 2rem; background: #f8fafc; color: #1e293b; }
-    .container { max-width: 1100px; margin: auto; }
-    .header-bar { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 1rem; margin-bottom: 1rem; }
-    select { padding: 0.6rem 1rem; font-size: 1rem; border-radius: 6px; border: 1px solid #cbd5e1; background: white; font-weight: 500; cursor: pointer; }
+    body { font-family: system-ui, sans-serif; margin: 1.5rem; background: #f8fafc; color: #1e293b; }
+    .container { max-width: 1200px; margin: auto; }
+    .header-bar { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 1rem; margin-bottom: 1.25rem; }
+    .controls { display: flex; flex-wrap: wrap; gap: 0.75rem; align-items: center; }
+    select { padding: 0.5rem 0.85rem; font-size: 0.95rem; border-radius: 6px; border: 1px solid #cbd5e1; background: white; font-weight: 500; cursor: pointer; }
     .card { background: white; padding: 1.5rem; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); margin-bottom: 1.5rem; overflow-x: auto; }
-    .bar-row { display: flex; align-items: center; margin-bottom: 0.75rem; gap: 1rem; }
-    .bar-label { width: 180px; font-weight: 500; font-size: 0.9rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-    .bar-track { flex: 1; background: #e2e8f0; border-radius: 4px; height: 24px; overflow: hidden; }
-    .bar-fill { background: #2563eb; height: 100%; transition: width 0.4s ease; }
-    .bar-value { width: 100px; text-align: right; font-variant-numeric: tabular-nums; font-size: 0.9rem; }
-    table { width: 100%; border-collapse: collapse; margin-top: 1rem; font-size: 0.9rem; }
-    th, td { text-align: left; padding: 0.65rem 0.75rem; border-bottom: 1px solid #e2e8f0; white-space: nowrap; }
-    th { background: #f1f5f9; position: sticky; top: 0; }
+    .chart-header { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 1rem; margin-bottom: 1rem; border-bottom: 1px solid #e2e8f0; padding-bottom: 0.75rem; }
+    .bar-row { display: flex; align-items: center; margin-bottom: 0.65rem; gap: 1rem; }
+    .bar-label { width: 200px; font-weight: 500; font-size: 0.88rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .bar-track { flex: 1; background: #e2e8f0; border-radius: 4px; height: 22px; overflow: hidden; }
+    .bar-fill { background: linear-gradient(90deg, #2563eb, #3b82f6); height: 100%; border-radius: 4px; transition: width 0.35s ease; }
+    .bar-value { width: 110px; text-align: right; font-variant-numeric: tabular-nums; font-size: 0.88rem; font-weight: 600; }
+    table { width: 100%; border-collapse: collapse; font-size: 0.88rem; }
+    th, td { text-align: left; padding: 0.6rem 0.75rem; border-bottom: 1px solid #e2e8f0; white-space: nowrap; }
+    th { background: #f1f5f9; font-weight: 600; }
+    tr:hover { background: #f8fafc; }
   </style>
 </head>
 <body>
   <div class="container">
     <div class="header-bar">
       <div>
-        <h1 style="margin:0;">Live Excel Dashboard</h1>
-        <p id="status" style="margin:0.25rem 0 0; color:#64748b;">Select a sheet to load...</p>
+        <h1 style="margin:0;">Railway Operations Dashboard</h1>
+        <p id="status" style="margin:0.25rem 0 0; color:#64748b; font-size:0.9rem;">Loading...</p>
       </div>
-      <div>
-        <label for="sheetSelect" style="font-weight:600; margin-right:0.5rem;">Select Sheet:</label>
+      <div class="controls">
+        <label for="sheetSelect" style="font-weight:600;">Sheet:</label>
         <select id="sheetSelect"></select>
       </div>
     </div>
 
     <div class="card">
-      <h3 id="chartTitle">Overview</h3>
+      <div class="chart-header">
+        <h3 id="chartTitle" style="margin:0;">Bar Chart</h3>
+        <div class="controls">
+          <label style="font-size:0.85rem; color:#475569;">Label (X):</label>
+          <select id="xColSelect"></select>
+          <label style="font-size:0.85rem; color:#475569;">Metric (Y):</label>
+          <select id="yColSelect"></select>
+        </div>
+      </div>
       <div id="chartContainer"></div>
     </div>
 
     <div class="card">
-      <h3>Raw Data Preview</h3>
+      <h3 style="margin-top:0;">Data Table</h3>
       <div id="tableContainer"></div>
     </div>
   </div>
 
   <script>
-    // Exact filenames from your GitHub repository
     const SHEETS = [
       { label: "Earning", file: "data.csv-Earning.csv" },
       { label: "Loading 25-26", file: "data.csv-LOADING-25-26.csv" },
@@ -72,12 +82,16 @@
       { label: "Index", file: "data.csv-INDEX.csv" }
     ];
 
-    const selectEl = document.getElementById('sheetSelect');
+    const sheetSelect = document.getElementById('sheetSelect');
+    const xColSelect = document.getElementById('xColSelect');
+    const yColSelect = document.getElementById('yColSelect');
+    let currentData = [];
+
     SHEETS.forEach(s => {
       const opt = document.createElement('option');
       opt.value = s.file;
       opt.textContent = s.label;
-      selectEl.appendChild(opt);
+      sheetSelect.appendChild(opt);
     });
 
     function parseCSV(text) {
@@ -100,78 +114,114 @@
         if (row.some(v => v !== '')) rows.push(row);
       }
       if (rows.length < 2) return [];
-      const headers = rows.at(0);
-      return rows.slice(1).map(r => {
+
+      // Smart header detection: skip top title banner rows that only have 1 filled cell
+      let headerIdx = rows.findIndex(r => r.filter(c => c !== '').length >= 2);
+      if (headerIdx === -1) headerIdx = 0;
+
+      const rawHeaders = rows[headerIdx];
+      const headers = rawHeaders.map((h, idx) => h || `Column ${idx + 1}`);
+
+      return rows.slice(headerIdx + 1).map(r => {
         const obj = {};
-        headers.forEach((h, idx) => obj[h || `Col ${idx + 1}`] = r[idx] ?? '');
+        headers.forEach((h, idx) => obj[h] = r[idx] ?? '');
         return obj;
       });
     }
+
+    const extractNum = val => {
+      if (val === null || val === undefined) return NaN;
+      const cleaned = String(val).replace(/,/g, '').replace(/[^0-9.-]+/g, '');
+      return cleaned === '' || cleaned === '-' || cleaned === '.' ? NaN : Number(cleaned);
+    };
 
     async function loadSheet(filename) {
       document.getElementById('status').innerText = `Loading ${filename}...`;
       try {
         const url = './' + encodeURIComponent(filename) + '?t=' + new Date().getTime();
         const response = await fetch(url);
-        if (!response.ok) throw new Error(`Could not load ${filename} (HTTP ${response.status})`);
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
 
         const csvText = await response.text();
-        const jsonData = parseCSV(csvText);
+        currentData = parseCSV(csvText);
 
-        if (jsonData.length === 0) {
-          document.getElementById('status').innerText = `${filename} is empty.`;
+        if (currentData.length === 0) {
+          document.getElementById('status').innerText = `${filename} has no table rows.`;
           document.getElementById('chartContainer').innerHTML = '';
           document.getElementById('tableContainer').innerHTML = '';
           return;
         }
 
-        document.getElementById('status').innerText = `Loaded: ${filename} (${jsonData.length} rows) • ${new Date().toLocaleTimeString()}`;
-        renderChart(jsonData);
-        renderTable(jsonData);
+        document.getElementById('status').innerText = `Loaded: ${filename} (${currentData.length} rows)`;
+        setupColumnSelectors(currentData);
+        renderChart();
+        renderTable(currentData);
       } catch (error) {
         document.getElementById('status').innerText = 'Error: ' + error.message;
       }
     }
 
-    function renderChart(data) {
-      const columns = Object.keys(data.at(0));
-      const labelCol = columns.at(0);
-      const valueCol = columns.at(1) || columns.at(0);
+    function setupColumnSelectors(data) {
+      const headers = Object.keys(data.at(0));
+      xColSelect.innerHTML = '';
+      yColSelect.innerHTML = '';
+
+      headers.forEach(h => {
+        xColSelect.add(new Option(h, h));
+        yColSelect.add(new Option(h, h));
+      });
+
+      // Automatically find the first column that actually contains numbers for the Y-axis
+      const firstNumericCol = headers.find(h => {
+        const numCount = data.filter(row => !isNaN(extractNum(row[h]))).length;
+        return numCount > 0;
+      });
+
+      xColSelect.value = headers.at(0);
+      yColSelect.value = firstNumericCol || headers.at(1) || headers.at(0);
+    }
+
+    function renderChart() {
+      if (!currentData.length) return;
+      const labelCol = xColSelect.value;
+      const valueCol = yColSelect.value;
 
       document.getElementById('chartTitle').innerText = `${valueCol} by ${labelCol}`;
 
-      const cleanNum = v => Number(String(v).replace(/[^0-9.-]+/g, '')) || 0;
-      const numericValues = data.map(r => cleanNum(r[valueCol]));
-      const maxVal = Math.max(...numericValues, 1);
+      const validRows = currentData
+        .map(row => ({ label: row[labelCol] || '—', val: extractNum(row[valueCol]) }))
+        .filter(item => !isNaN(item.val));
 
-      const chartHtml = data.map(row => {
-        const label = row[labelCol] ?? '';
-        const val = cleanNum(row[valueCol]);
-        const pct = Math.max(0, (val / maxVal) * 100);
+      if (validRows.length === 0) {
+        document.getElementById('chartContainer').innerHTML =
+          `<p style="color:#64748b;">No numeric values found in "<strong>${valueCol}</strong>". Choose a numeric column in the <strong>Metric (Y)</strong> dropdown above.</p>`;
+        return;
+      }
+
+      const maxVal = Math.max(...validRows.map(r => Math.abs(r.val)), 1);
+
+      document.getElementById('chartContainer').innerHTML = validRows.map(item => {
+        const pct = Math.min(100, Math.max(0, (Math.abs(item.val) / maxVal) * 100));
         return `
           <div class="bar-row">
-            <div class="bar-label" title="${label}">${label}</div>
+            <div class="bar-label" title="${item.label}">${item.label}</div>
             <div class="bar-track"><div class="bar-fill" style="width: ${pct}%"></div></div>
-            <div class="bar-value">${val.toLocaleString()}</div>
+            <div class="bar-value">${item.val.toLocaleString('en-IN')}</div>
           </div>
         `;
       }).join('');
-
-      document.getElementById('chartContainer').innerHTML = chartHtml;
     }
 
     function renderTable(data) {
       const headers = Object.keys(data.at(0));
       let html = '<table><thead><tr>' + headers.map(h => `<th>${h}</th>`).join('') + '</tr></thead><tbody>';
       data.forEach(row => {
-        html += '<tr>' + headers.map(h => `<td>${row[h] ?? ''}</td>`).join('') + '</tr>';
-      });
-      html += '</tbody></table>';
-      document.getElementById('tableContainer').innerHTML = html;
-    }
-
-    selectEl.addEventListener('change', (e) => loadSheet(e.target.value));
-    loadSheet(SHEETS.at(0).file);
-  </script>
-</body>
-</html>
+html += '' + headers.map(h => <td>${row[h] ?? ''}</td>).join('') + '';
+});
+html += '';
+document.getElementById('tableContainer').innerHTML = html;
+}
+sheetSelect.addEventListener('change', e => loadSheet(e.target.value));
+xColSelect.addEventListener('change', renderChart);
+yColSelect.addEventListener('change', renderChart);
+loadSheet(SHEETS.at(0).file);
