@@ -4,6 +4,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Excel Auto-Updating Dashboard</title>
+  <!-- Uses the xlsx.full.min.js file already in your repository -->
+  <script src="./xlsx.full.min.js"></script>
   <style>
     body { font-family: system-ui, sans-serif; margin: 2rem; background: #f8fafc; color: #1e293b; }
     .container { max-width: 1000px; margin: auto; }
@@ -21,7 +23,7 @@
 <body>
   <div class="container">
     <h1>Live Excel Dashboard</h1>
-    <p id="status">Loading data...</p>
+    <p id="status">Reading data.xlsx...</p>
 
     <div class="card">
       <h3 id="chartTitle">Overview</h3>
@@ -35,14 +37,24 @@
   </div>
 
   <script>
-    async function loadDashboard() {
+    async function loadExcelDashboard() {
       try {
-        const response = await fetch('./data.json?t=' + new Date().getTime());
-        if (!response.ok) {
-          throw new Error('data.json not generated yet. Re-upload data.xlsx to trigger conversion.');
+        if (typeof XLSX === 'undefined') {
+          throw new Error('xlsx.full.min.js did not load properly.');
         }
 
-        const jsonData = await response.json();
+        const response = await fetch('./data.xlsx?t=' + new Date().getTime());
+        if (!response.ok) {
+          throw new Error('Could not load data.xlsx (HTTP ' + response.status + ')');
+        }
+
+        const arrayBuffer = await response.arrayBuffer();
+        const workbook = XLSX.read(arrayBuffer, { type: 'array' });
+
+        const firstSheetName = workbook.SheetNames.at(0);
+        const worksheet = workbook.Sheets[firstSheetName];
+        const jsonData = XLSX.utils.sheet_to_json(worksheet);
+
         if (!jsonData || jsonData.length === 0) {
           document.getElementById('status').innerText = 'Excel sheet is empty.';
           return;
@@ -52,7 +64,7 @@
         renderChart(jsonData);
         renderTable(jsonData);
       } catch (error) {
-        document.getElementById('status').innerText = 'Status: ' + error.message;
+        document.getElementById('status').innerText = 'Error: ' + error.message;
       }
     }
 
@@ -93,7 +105,7 @@
       document.getElementById('tableContainer').innerHTML = html;
     }
 
-    loadDashboard();
+    window.addEventListener('DOMContentLoaded', loadExcelDashboard);
   </script>
 </body>
 </html>
