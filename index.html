@@ -3,25 +3,35 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Excel Auto-Updating Dashboard</title>
+  <title>Railway Operations Live Dashboard</title>
   <style>
     body { font-family: system-ui, sans-serif; margin: 2rem; background: #f8fafc; color: #1e293b; }
-    .container { max-width: 1000px; margin: auto; }
+    .container { max-width: 1100px; margin: auto; }
+    .header-bar { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 1rem; margin-bottom: 1rem; }
+    select { padding: 0.6rem 1rem; font-size: 1rem; border-radius: 6px; border: 1px solid #cbd5e1; background: white; font-weight: 500; cursor: pointer; }
     .card { background: white; padding: 1.5rem; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); margin-bottom: 1.5rem; overflow-x: auto; }
     .bar-row { display: flex; align-items: center; margin-bottom: 0.75rem; gap: 1rem; }
-    .bar-label { width: 160px; font-weight: 500; font-size: 0.9rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .bar-label { width: 180px; font-weight: 500; font-size: 0.9rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .bar-track { flex: 1; background: #e2e8f0; border-radius: 4px; height: 24px; overflow: hidden; }
-    .bar-fill { background: #3b82f6; height: 100%; transition: width 0.4s ease; }
-    .bar-value { width: 90px; text-align: right; font-variant-numeric: tabular-nums; font-size: 0.9rem; }
-    table { width: 100%; border-collapse: collapse; margin-top: 1rem; }
-    th, td { text-align: left; padding: 0.75rem; border-bottom: 1px solid #e2e8f0; }
-    th { background: #f1f5f9; }
+    .bar-fill { background: #2563eb; height: 100%; transition: width 0.4s ease; }
+    .bar-value { width: 100px; text-align: right; font-variant-numeric: tabular-nums; font-size: 0.9rem; }
+    table { width: 100%; border-collapse: collapse; margin-top: 1rem; font-size: 0.9rem; }
+    th, td { text-align: left; padding: 0.65rem 0.75rem; border-bottom: 1px solid #e2e8f0; white-space: nowrap; }
+    th { background: #f1f5f9; position: sticky; top: 0; }
   </style>
 </head>
 <body>
   <div class="container">
-    <h1>Live Excel Dashboard</h1>
-    <p id="status">Loading data.csv...</p>
+    <div class="header-bar">
+      <div>
+        <h1 style="margin:0;">Live Excel Dashboard</h1>
+        <p id="status" style="margin:0.25rem 0 0; color:#64748b;">Select a sheet to load...</p>
+      </div>
+      <div>
+        <label for="sheetSelect" style="font-weight:600; margin-right:0.5rem;">Select Sheet:</label>
+        <select id="sheetSelect"></select>
+      </div>
+    </div>
 
     <div class="card">
       <h3 id="chartTitle">Overview</h3>
@@ -35,6 +45,41 @@
   </div>
 
   <script>
+    // Exact filenames from your GitHub repository
+    const SHEETS = [
+      { label: "Earning", file: "data.csv-Earning.csv" },
+      { label: "Loading 25-26", file: "data.csv-LOADING-25-26.csv" },
+      { label: "Loading 26-27", file: "data.csv-LOADING-26-27.csv" },
+      { label: "Loading Comparison", file: "data.csv-loading comparison.csv" },
+      { label: "Interchange", file: "data.csv-INTERCHANGE.csv" },
+      { label: "Load", file: "data.csv-Load.csv" },
+      { label: "Loco Utilization", file: "data.csv-Loco Utilization.csv" },
+      { label: "Long Haul & Crack", file: "data.csv-Long Haul & Crack.csv" },
+      { label: "NTKM Originating", file: "data.csv-NTKM ORIGINATING.csv" },
+      { label: "NTKM Per Wagon Day", file: "data.csv-NTKM PER WAGON DAY.csv" },
+      { label: "Running Train KM", file: "data.csv-RUNNING TRAIN KM.csv" },
+      { label: "Rail Co-efficient", file: "data.csv-Rail Co-efficient.csv" },
+      { label: "Rake, MT, Wagon Comp 2025-26", file: "data.csv-Rake, MT, Wagon Comp 2025-26.csv" },
+      { label: "Rake, MT, Wagon Comp 2026-27", file: "data.csv-Rake, MT, Wagon Comp 2026-27.csv" },
+      { label: "GTD, WTR, PVT, INEFF-25-26", file: "data.csv-GTD, WTR, PVT, INEFF-25-26.csv" },
+      { label: "GTD, WTR, PVT, INEFF-26-27", file: "data.csv-GTD, WTR, PVT, INEFF-26-27.csv" },
+      { label: "Wagon Holding", file: "data.csv-Wagon Holding.csv" },
+      { label: "WKM Per Wagon Day", file: "data.csv-WKM PER WAGON DAY.csv" },
+      { label: "WTR", file: "data.csv-WTR.csv" },
+      { label: "Weight MT", file: "data.csv-weight MT.csv" },
+      { label: "Weight MT Previous Year", file: "data.csv-Weight MT previous Year.csv" },
+      { label: "Speed", file: "data.csv-speed.csv" },
+      { label: "Index", file: "data.csv-INDEX.csv" }
+    ];
+
+    const selectEl = document.getElementById('sheetSelect');
+    SHEETS.forEach(s => {
+      const opt = document.createElement('option');
+      opt.value = s.file;
+      opt.textContent = s.label;
+      selectEl.appendChild(opt);
+    });
+
     function parseCSV(text) {
       const rows = [];
       let row = [], cell = '', inQuotes = false;
@@ -63,20 +108,24 @@
       });
     }
 
-    async function loadDashboard() {
+    async function loadSheet(filename) {
+      document.getElementById('status').innerText = `Loading ${filename}...`;
       try {
-        const response = await fetch('./data.csv?t=' + new Date().getTime());
-        if (!response.ok) throw new Error('Could not find data.csv (HTTP ' + response.status + ')');
+        const url = './' + encodeURIComponent(filename) + '?t=' + new Date().getTime();
+        const response = await fetch(url);
+        if (!response.ok) throw new Error(`Could not load ${filename} (HTTP ${response.status})`);
 
         const csvText = await response.text();
         const jsonData = parseCSV(csvText);
 
         if (jsonData.length === 0) {
-          document.getElementById('status').innerText = 'CSV file is empty.';
+          document.getElementById('status').innerText = `${filename} is empty.`;
+          document.getElementById('chartContainer').innerHTML = '';
+          document.getElementById('tableContainer').innerHTML = '';
           return;
         }
 
-        document.getElementById('status').innerText = `Last loaded: ${new Date().toLocaleString()} (${jsonData.length} rows)`;
+        document.getElementById('status').innerText = `Loaded: ${filename} (${jsonData.length} rows) • ${new Date().toLocaleTimeString()}`;
         renderChart(jsonData);
         renderTable(jsonData);
       } catch (error) {
@@ -86,8 +135,8 @@
 
     function renderChart(data) {
       const columns = Object.keys(data.at(0));
-      const labelCol = columns.at(0); // Column A
-      const valueCol = columns.at(1); // Column B
+      const labelCol = columns.at(0);
+      const valueCol = columns.at(1) || columns.at(0);
 
       document.getElementById('chartTitle').innerText = `${valueCol} by ${labelCol}`;
 
@@ -121,7 +170,8 @@
       document.getElementById('tableContainer').innerHTML = html;
     }
 
-    loadDashboard();
+    selectEl.addEventListener('change', (e) => loadSheet(e.target.value));
+    loadSheet(SHEETS.at(0).file);
   </script>
 </body>
 </html>
