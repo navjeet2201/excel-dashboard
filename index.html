@@ -4,10 +4,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Excel Auto-Updating Dashboard</title>
-  <!-- Reliable CDN for SheetJS -->
-  <script src="https://cloudflare.com"></script>
-  <!-- Reliable CDN for Chart.js -->
-  <script src="https://cloudflare.com"></script>
+  <!-- Load Chart.js -->
+  <script src="https://jsdelivr.net"></script>
   <style>
     body { font-family: system-ui, sans-serif; margin: 2rem; background: #f8fafc; color: #1e293b; }
     .container { max-width: 1000px; margin: auto; }
@@ -20,7 +18,7 @@
 <body>
   <div class="container">
     <h1>Live Excel Dashboard</h1>
-    <p id="status">Loading data from data.xlsx...</p>
+    <p id="status">Initializing libraries...</p>
 
     <div class="card">
       <canvas id="dashboardChart" height="100"></canvas>
@@ -33,20 +31,48 @@
   </div>
 
   <script>
+    // Dynamically loads XLSX from local repo first, then reliable CDNs
+    function loadScript(src) {
+      return new Promise((resolve, reject) => {
+        const s = document.createElement('script');
+        s.src = src;
+        s.onload = resolve;
+        s.onerror = reject;
+        document.head.appendChild(s);
+      });
+    }
+
+    async function ensureXLSX() {
+      if (typeof XLSX !== 'undefined') return;
+      const sources = [
+        './xlsx.full.min.js',
+        'https://jsdelivr.net',
+        'https://unpkg.com'
+      ];
+      for (const url of sources) {
+        try {
+          await loadScript(url);
+          if (typeof XLSX !== 'undefined') return;
+        } catch (e) {
+          console.warn('Failed to load from:', url);
+        }
+      }
+      throw new Error('All Excel library sources failed to load.');
+    }
+
     async function loadExcelDashboard() {
       try {
-        if (typeof XLSX === 'undefined') {
-          throw new Error('Excel library failed to load. Check your internet connection or ad-blocker.');
-        }
+        await ensureXLSX();
+        document.getElementById('status').innerText = 'Reading data.xlsx...';
 
         const response = await fetch('./data.xlsx?t=' + new Date().getTime());
-        if (!response.ok) throw new Error('Could not find data.xlsx in repository (HTTP ' + response.status + ')');
+        if (!response.ok) throw new Error('Could not find data.xlsx (HTTP ' + response.status + ')');
         
         const arrayBuffer = await response.arrayBuffer();
         const workbook = XLSX.read(arrayBuffer, { type: 'array' });
         
-        // Grab the first sheet
-        const firstSheetName = workbook.SheetNames[0];
+        // Grab the first sheet safely
+        const firstSheetName = workbook.SheetNames.at(0);
         const worksheet = workbook.Sheets[firstSheetName];
         const jsonData = XLSX.utils.sheet_to_json(worksheet);
         
@@ -60,14 +86,16 @@
         renderChart(jsonData);
         renderTable(jsonData);
       } catch (error) {
-        document.getElementById('status').innerText = 'Error loading data: ' + error.message;
+        document.getElementById('status').innerText = 'Error: ' + error.message;
       }
     }
 
     function renderChart(data) {
-      const columns = Object.keys(data[0]);
-      const labelColumn = columns[0]; // Column A
-      const valueColumn = columns[1]; // Column B
+      if (typeof Chart === 'undefined') return;
+      const firstRow = data.at(0);
+      const columns = Object.keys(firstRow);
+      const labelColumn = columns.at(0); // Column A
+      const valueColumn = columns.at(1); // Column B
 
       const labels = data.map(row => row[labelColumn]);
       const values = data.map(row => Number(row[valueColumn]) || 0);
@@ -89,7 +117,8 @@
     }
 
     function renderTable(data) {
-      const headers = Object.keys(data[0]);
+      const firstRow = data.at(0);
+      const headers = Object.keys(firstRow);
       let html = '<table><thead><tr>' + headers.map(h => `<th>${h}</th>`).join('') + '</tr></thead><tbody>';
       data.forEach(row => {
         html += '<tr>' + headers.map(h => `<td>${row[h] ?? ''}</td>`).join('') + '</tr>';
