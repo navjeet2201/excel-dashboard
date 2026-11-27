@@ -1,0 +1,531 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>UMB Division • Freight & Operations Analytics</title>
+  <style>
+    :root {
+      --bg: #f8fafc;
+      --surface: #ffffff;
+      --primary: #0f172a;
+      --accent: #2563eb;
+      --accent-2: #0d9488;
+      --accent-3: #f59e0b;
+      --accent-4: #8b5cf6;
+      --text: #0f172a;
+      --muted: #64748b;
+      --border: #e2e8f0;
+      --pill-bg: #f1f5f9;
+    }
+    * { box-sizing: border-box; }
+    body { font-family: system-ui, -apple-system, sans-serif; margin: 0; background: var(--bg); color: var(--text); line-height: 1.45; }
+    
+    .header { background: var(--surface); border-bottom: 1px solid var(--border); padding: 1.1rem 1.75rem; position: sticky; top: 0; z-index: 20; }
+    .header-inner { max-width: 1360px; margin: auto; display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 1rem; }
+    .title-wrap h1 { margin: 0; font-size: 1.25rem; font-weight: 800; color: var(--primary); letter-spacing: -0.02em; }
+    .title-wrap p { margin: 0.15rem 0 0; font-size: 0.82rem; color: var(--muted); }
+    .badge { background: #eff6ff; color: var(--accent); border: 1px solid #bfdbfe; padding: 0.3rem 0.75rem; border-radius: 99px; font-size: 0.78rem; font-weight: 700; }
+
+    .container { max-width: 1360px; margin: 1.25rem auto; padding: 0 1.5rem 2.5rem; }
+
+    /* Filter Pills */
+    .pills-section { margin-bottom: 1rem; }
+    .pills-label { font-size: 0.72rem; font-weight: 700; text-transform: uppercase; color: var(--muted); letter-spacing: 0.05em; margin-bottom: 0.45rem; display: block; }
+    .pills-bar { display: flex; gap: 0.45rem; overflow-x: auto; padding-bottom: 0.4rem; scrollbar-width: thin; }
+    .pill {
+      border: 1px solid var(--border); background: var(--surface); color: #334155;
+      padding: 0.42rem 0.85rem; border-radius: 99px; font-size: 0.82rem; font-weight: 600;
+      cursor: pointer; white-space: nowrap; transition: all 0.15s ease;
+    }
+    .pill:hover { border-color: #94a3b8; background: #f8fafc; }
+    .pill.active { background: var(--primary); color: #fff; border-color: var(--primary); }
+
+    /* Sub-table & Controls Bar */
+    .sub-bar {
+      background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
+      padding: 0.9rem 1.2rem; margin-bottom: 1.25rem;
+      display: flex; flex-wrap: wrap; gap: 1rem; align-items: flex-end;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.03);
+    }
+    .ctrl { display: flex; flex-direction: column; gap: 0.25rem; min-width: 165px; flex: 1; }
+    .ctrl label { font-size: 0.7rem; font-weight: 700; text-transform: uppercase; color: var(--muted); letter-spacing: 0.04em; }
+    select, input[type="text"] {
+      padding: 0.48rem 0.7rem; font-size: 0.88rem; border: 1px solid #cbd5e1;
+      border-radius: 8px; background: #fff; color: var(--text); font-weight: 500;
+    }
+
+    /* 4-Card KPI Strip */
+    .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1rem; margin-bottom: 1.25rem; }
+    .kpi {
+      background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
+      padding: 1.1rem 1.25rem; box-shadow: 0 1px 2px rgba(0,0,0,0.03);
+      position: relative; overflow: hidden;
+    }
+    .kpi::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 4px; background: var(--accent); }
+    .kpi.k2::before { background: var(--accent-2); }
+    .kpi.k3::before { background: var(--accent-3); }
+    .kpi.k4::before { background: var(--accent-4); }
+    .kpi-lbl { font-size: 0.74rem; font-weight: 700; text-transform: uppercase; color: var(--muted); }
+    .kpi-val { font-size: 1.6rem; font-weight: 800; margin: 0.25rem 0 0.1rem; font-variant-numeric: tabular-nums; letter-spacing: -0.02em; }
+    .kpi-sub { font-size: 0.78rem; color: var(--muted); }
+
+    /* 2 Side-by-Side Analytical Grid */
+    .charts-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(460px, 1fr)); gap: 1.25rem; margin-bottom: 1.25rem; }
+    @media (max-width: 540px) { .charts-grid { grid-template-columns: 1fr; } }
+
+    .card {
+      background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
+      padding: 1.25rem 1.4rem; box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+    }
+    .card-hd {
+      display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center;
+      gap: 0.75rem; margin-bottom: 1rem; padding-bottom: 0.75rem; border-bottom: 1px solid var(--border);
+    }
+    .card-hd h3 { margin: 0; font-size: 1rem; font-weight: 700; }
+    .card-sub { font-size: 0.78rem; color: var(--muted); margin-top: 0.1rem; }
+
+    .seg { display: inline-flex; background: var(--pill-bg); padding: 3px; border-radius: 8px; border: 1px solid var(--border); }
+    .seg button {
+      border: none; background: transparent; padding: 0.32rem 0.75rem; font-size: 0.8rem;
+      font-weight: 600; color: var(--muted); border-radius: 6px; cursor: pointer;
+    }
+    .seg button.active { background: var(--surface); color: var(--accent); box-shadow: 0 1px 2px rgba(0,0,0,0.08); }
+
+    .legend { display: flex; flex-wrap: wrap; gap: 1rem; font-size: 0.8rem; font-weight: 600; margin-bottom: 0.85rem; }
+    .leg-item { display: flex; align-items: center; gap: 0.4rem; }
+    .dot { width: 10px; height: 10px; border-radius: 3px; display: inline-block; }
+
+    /* Grouped Bars */
+    .g-row { margin-bottom: 0.7rem; }
+    .g-top { display: flex; justify-content: space-between; font-size: 0.82rem; font-weight: 600; margin-bottom: 0.22rem; }
+    .g-tracks { display: flex; flex-direction: column; gap: 3px; }
+    .track { background: #f1f5f9; height: 11px; border-radius: 4px; overflow: hidden; }
+    .track.single { height: 18px; }
+    .fill-1 { background: #2563eb; height: 100%; border-radius: 4px; transition: width 0.3s; }
+    .fill-2 { background: #0d9488; height: 100%; border-radius: 4px; transition: width 0.3s; }
+
+    /* Donut Layout */
+    .donut-wrap { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 1.5rem; padding: 0.5rem 0; }
+    .donut-list { flex: 1; min-width: 210px; max-height: 250px; overflow-y: auto; }
+    .d-item { display: flex; justify-content: space-between; align-items: center; padding: 0.38rem 0; border-bottom: 1px dashed var(--border); font-size: 0.82rem; }
+    .d-left { display: flex; align-items: center; gap: 0.45rem; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 170px; }
+
+    /* Collapsible Table */
+    .tbl-body.collapsed { display: none; }
+    .tbl-wrap { overflow-x: auto; max-height: 440px; border: 1px solid var(--border); border-radius: 8px; margin-top: 0.85rem; }
+    table { width: 100%; border-collapse: collapse; font-size: 0.83rem; }
+    th, td { padding: 0.55rem 0.75rem; border-bottom: 1px solid var(--border); white-space: nowrap; text-align: left; }
+    th { background: #f8fafc; position: sticky; top: 0; font-weight: 700; z-index: 2; border-bottom: 2px solid #cbd5e1; }
+    tr:hover td { background: #f8fafc; }
+    tr.sum td { background: #eff6ff; font-weight: 700; color: #1e3a8a; }
+    .empty { color: var(--muted); text-align: center; padding: 2rem 1rem; font-size: 0.88rem; }
+  </style>
+</head>
+<body>
+
+  <header class="header">
+    <div class="header-inner">
+      <div class="title-wrap">
+        <h1>Ambala Division (UMB) • Freight & Operations Dashboard</h1>
+        <p id="status">Loading repository datasets...</p>
+      </div>
+      <span class="badge">Live GitHub CSV Feed</span>
+    </div>
+  </header>
+
+  <main class="container">
+    <!-- Report Filter Pills -->
+    <div class="pills-section">
+      <span class="pills-label">Select Report Sheet (23 Datasets)</span>
+      <div class="pills-bar" id="pillsBar"></div>
+    </div>
+
+    <!-- Period & Axis Selectors -->
+    <div class="sub-bar">
+      <div class="ctrl">
+        <label>Sub-Table / Period</label>
+        <select id="secSel"></select>
+      </div>
+      <div class="ctrl">
+        <label>Category / Date (X-Axis)</label>
+        <select id="xSel"></select>
+      </div>
+      <div class="ctrl">
+        <label>Primary Metric (Series 1)</label>
+        <select id="y1Sel"></select>
+      </div>
+      <div class="ctrl">
+        <label>Compare Metric (Series 2)</label>
+        <select id="y2Sel"></select>
+      </div>
+    </div>
+
+    <!-- 4-Card KPI Summary Strip -->
+    <section class="kpi-grid" id="kpiGrid"></section>
+
+    <!-- 2 Side-by-Side Interactive Charts -->
+    <section class="charts-grid">
+      <!-- Left Chart: Grouped Side-by-Side Bars or Trend Line -->
+      <div class="card">
+        <div class="card-hd">
+          <div>
+            <h3 id="leftTitle">Primary Trend & Comparison</h3>
+            <div class="card-sub" id="leftSub">Side-by-side metric comparison</div>
+          </div>
+          <div class="seg">
+            <button class="active" id="btnBar" onclick="setLeftMode('bar')">Grouped Bars</button>
+            <button id="btnLine" onclick="setLeftMode('line')">Trend Line</button>
+          </div>
+        </div>
+        <div class="legend" id="leftLegend"></div>
+        <div id="leftChart"></div>
+      </div>
+
+      <!-- Right Chart: Proportional Donut Breakdown or Secondary Distribution -->
+      <div class="card">
+        <div class="card-hd">
+          <div>
+            <h3 id="rightTitle">Distribution & Composition</h3>
+            <div class="card-sub" id="rightSub">Proportional share across categories</div>
+          </div>
+          <div class="seg">
+            <button class="active" id="btnDonut" onclick="setRightMode('donut')">Donut Share</button>
+            <button id="btnDist" onclick="setRightMode('bar')">Series 2 Bars</button>
+          </div>
+        </div>
+        <div id="rightChart"></div>
+      </div>
+    </section>
+
+    <!-- Collapsible Searchable Data Table -->
+    <section class="card">
+      <div class="card-hd" style="margin-bottom:0; border-bottom:none; padding-bottom:0;">
+        <div>
+          <h3 id="tblTitle">Detailed Records</h3>
+          <div class="card-sub">Full tabular data for the selected sub-table</div>
+        </div>
+        <div style="display:flex; gap:0.6rem; align-items:center;">
+          <input type="text" id="qInput" placeholder="Filter rows...">
+          <button class="pill" id="toggleTblBtn" onclick="toggleTable()">Hide Table</button>
+        </div>
+      </div>
+      <div class="tbl-body" id="tblBody">
+        <div class="tbl-wrap" id="tblWrap"></div>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    var SHEETS = [
+      { label: "Earning", file: "data.csv-Earning.csv" },
+      { label: "Loading 25-26", file: "data.csv-LOADING-25-26.csv" },
+      { label: "Loading 26-27", file: "data.csv-LOADING-26-27.csv" },
+      { label: "Loading Comparison", file: "data.csv-loading comparison.csv" },
+      { label: "Interchange", file: "data.csv-INTERCHANGE.csv" },
+      { label: "Lead", file: "data.csv-Load.csv" },
+      { label: "Loco Utilization", file: "data.csv-Loco Utilization.csv" },
+      { label: "Long Haul & Crack", file: "data.csv-Long Haul & Crack.csv" },
+      { label: "NTKM Originating", file: "data.csv-NTKM ORIGINATING.csv" },
+      { label: "NTKM / Wagon Day", file: "data.csv-NTKM PER WAGON DAY.csv" },
+      { label: "Running Train KM", file: "data.csv-RUNNING TRAIN KM.csv" },
+      { label: "Rail Co-efficient", file: "data.csv-Rail Co-efficient.csv" },
+      { label: "Rake Comp 25-26", file: "data.csv-Rake, MT, Wagon Comp 2025-26.csv" },
+      { label: "Rake Comp 26-27", file: "data.csv-Rake, MT, Wagon Comp 2026-27.csv" },
+      { label: "GTD/WTR 25-26", file: "data.csv-GTD, WTR, PVT, INEFF-25-26.csv" },
+      { label: "GTD/WTR 26-27", file: "data.csv-GTD, WTR, PVT, INEFF-26-27.csv" },
+      { label: "Wagon Holding", file: "data.csv-Wagon Holding.csv" },
+      { label: "WKM / Wagon Day", file: "data.csv-WKM PER WAGON DAY.csv" },
+      { label: "WTR", file: "data.csv-WTR.csv" },
+      { label: "Weight MT", file: "data.csv-weight MT.csv" },
+      { label: "Weight MT Prev Yr", file: "data.csv-Weight MT previous Year.csv" },
+      { label: "Speed", file: "data.csv-speed.csv" },
+      { label: "Index", file: "data.csv-INDEX.csv" }
+    ];
+
+    var COLORS = ["#2563eb", "#0d9488", "#f59e0b", "#8b5cf6", "#ec4899", "#06b6d4", "#84cc16", "#f97316", "#6366f1", "#14b8a6"];
+    var pillsBar = document.getElementById('pillsBar');
+    var secSel = document.getElementById('secSel');
+    var xSel = document.getElementById('xSel');
+    var y1Sel = document.getElementById('y1Sel');
+    var y2Sel = document.getElementById('y2Sel');
+    var qInput = document.getElementById('qInput');
+
+    var sections = [], curSec = null, leftMode = 'bar', rightMode = 'donut', activeFile = '';
+
+    function pick(arr, idx) { return arr.slice(idx, idx + 1).shift(); }
+
+    SHEETS.forEach(function(s) {
+      var btn = document.createElement('button');
+      btn.className = 'pill';
+      btn.textContent = s.label;
+      btn.setAttribute('data-file', s.file);
+      btn.onclick = function() { loadFile(s.file); };
+      pillsBar.appendChild(btn);
+    });
+
+    function parseCSV(text) {
+      var rows = [], row = [], cell = '', q = false;
+      for (var i = 0; i < text.length; i++) {
+        var ch = text.charAt(i), nx = text.charAt(i + 1);
+        if (ch === '"' && q && nx === '"') { cell += '"'; i++; }
+        else if (ch === '"') { q = !q; }
+        else if (ch === ',' && !q) { row.push(cell.trim()); cell = ''; }
+        else if ((ch === '\n' || ch === '\r') && !q) {
+          if (ch === '\r' && nx === '\n') i++;
+          row.push(cell.trim()); rows.push(row); row = []; cell = '';
+        } else { cell += ch; }
+      }
+      if (cell || row.length) { row.push(cell.trim()); rows.push(row); }
+      return rows;
+    }
+
+    function toNum(v) {
+      var s = String(v == null ? '' : v).trim();
+      if (!s || s.indexOf('#') === 0 || s.indexOf('/') !== -1) return NaN;
+      var n = Number(s.replace(/,/g, '').replace(/%/g, ''));
+      return isNaN(n) ? NaN : n;
+    }
+
+    function buildSections(rows) {
+      var blocks = [], blk = [], title = '';
+      rows.forEach(function(r) {
+        var filled = r.filter(function(c) { return c !== '' && c.indexOf('#') !== 0; });
+        if (filled.length === 0) {
+          if (blk.length >= 2) { blocks.push({ title: title, rows: blk }); blk = []; title = ''; }
+        } else if (filled.length === 1 && blk.length === 0) {
+          title = pick(filled, 0);
+        } else { blk.push(r); }
+      });
+      if (blk.length >= 2) blocks.push({ title: title, rows: blk });
+
+      return blocks.map(function(b, idx) {
+        var hIdx = b.rows.findIndex(function(r) { return r.filter(function(c) { return c !== ''; }).length >= 2; });
+        if (hIdx < 0) hIdx = 0;
+        if (!b.title && hIdx > 0) b.title = pick(b.rows[hIdx - 1].filter(function(c) { return c !== ''; }), 0) || '';
+
+        var rawH = b.rows[hIdx], cols = [], seen = {};
+        var maxC = Math.max.apply(null, b.rows.slice(hIdx).map(function(r) { return r.length; }));
+        for (var c = 0; c < maxC; c++) {
+          if ((rawH[c] || '') !== '' || b.rows.slice(hIdx + 1).some(function(r) { return (r[c] || '') !== ''; })) cols.push(c);
+        }
+        var headers = cols.map(function(ci, i) {
+          var nm = (rawH[ci] || (i === 0 ? 'Category' : 'Col ' + (ci + 1))).replace(/\s+/g, ' ').trim();
+          seen[nm] = (seen[nm] || 0) + 1;
+          return seen[nm] > 1 ? nm + ' (' + seen[nm] + ')' : nm;
+        });
+        var records = b.rows.slice(hIdx + 1).filter(function(r) { return r.some(function(c) { return c !== ''; }); }).map(function(r) {
+          var o = {};
+          cols.forEach(function(ci, i) { var v = r[ci] || ''; o[headers[i]] = v.indexOf('#') === 0 ? '—' : v; });
+          return o;
+        });
+        return { label: b.title || ('Table ' + (idx + 1) + ' (' + headers.slice(1, 4).join(', ') + ')'), headers: headers, records: records };
+      }).filter(function(s) { return s.records.length > 0; });
+    }
+
+    function loadFile(file) {
+      activeFile = file;
+      var btns = pillsBar.querySelectorAll('.pill');
+      for (var i = 0; i < btns.length; i++) {
+        btns[i].classList.toggle('active', btns[i].getAttribute('data-file') === file);
+      }
+      document.getElementById('status').innerText = 'Fetching ' + file + '...';
+      fetch('./' + encodeURIComponent(file) + '?t=' + Date.now())
+        .then(function(r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.text(); })
+        .then(function(txt) {
+          sections = buildSections(parseCSV(txt));
+          secSel.innerHTML = '';
+          sections.forEach(function(s, i) { secSel.add(new Option(s.label, i)); });
+          document.getElementById('status').innerText = 'Active Report: ' + file + ' (' + sections.length + ' table' + (sections.length > 1 ? 's' : '') + ')';
+          if (sections.length) pickSection(0);
+        })
+        .catch(function(e) { document.getElementById('status').innerText = 'Error: ' + e.message; });
+    }
+
+    function pickSection(i) {
+      curSec = sections[i];
+      xSel.innerHTML = ''; y1Sel.innerHTML = ''; y2Sel.innerHTML = '';
+      y2Sel.add(new Option('None (Single Series)', ''));
+
+      curSec.headers.forEach(function(h) {
+        xSel.add(new Option(h, h));
+        y1Sel.add(new Option(h, h));
+        y2Sel.add(new Option(h, h));
+      });
+
+      var numCols = curSec.headers.filter(function(h) {
+        return !/s\.?no|sr\s*no/i.test(h) && curSec.records.some(function(r) { return !isNaN(toNum(r[h])); });
+      });
+
+      xSel.value = curSec.headers.find(function(h) { return /date|month|commodity|period/i.test(h); }) || pick(curSec.headers, 0);
+      y1Sel.value = pick(numCols, 0) || pick(curSec.headers, 1) || pick(curSec.headers, 0);
+      y2Sel.value = pick(numCols, 1) || '';
+      qInput.value = '';
+      draw();
+    }
+
+    function isSum(row, xCol) {
+      var s = (Object.keys(row).slice(0, 2).map(function(k) { return row[k]; }).join(' ') + ' ' + (row[xCol] || '')).toLowerCase();
+      return /\b(total|avg|average|upto)\b/.test(s);
+    }
+
+    function setLeftMode(m) {
+      leftMode = m;
+      document.getElementById('btnBar').classList.toggle('active', m === 'bar');
+      document.getElementById('btnLine').classList.toggle('active', m === 'line');
+      draw();
+    }
+
+    function setRightMode(m) {
+      rightMode = m;
+      document.getElementById('btnDonut').classList.toggle('active', m === 'donut');
+      document.getElementById('btnDist').classList.toggle('active', m === 'bar');
+      draw();
+    }
+
+    function toggleTable() {
+      var body = document.getElementById('tblBody');
+      var btn = document.getElementById('toggleTblBtn');
+      var hidden = body.classList.toggle('collapsed');
+      btn.textContent = hidden ? 'Show Table' : 'Hide Table';
+    }
+
+    function fmt(n) { return n.toLocaleString('en-IN', { maximumFractionDigits: 2 }); }
+
+    function draw() {
+      if (!curSec) return;
+      var xCol = xSel.value, y1Col = y1Sel.value, y2Col = y2Sel.value;
+      var cleanRows = curSec.records.filter(function(r) { return !isSum(r, xCol); });
+
+      var pts = cleanRows.map(function(r) {
+        return { l: r[xCol] || '—', v1: toNum(r[y1Col]), v2: y2Col ? toNum(r[y2Col]) : NaN };
+      }).filter(function(d) { return !isNaN(d.v1); });
+
+      // 1. Render 4-Card KPI Strip
+      var kpiGrid = document.getElementById('kpiGrid');
+      if (pts.length) {
+        var sum = pts.reduce(function(a, b) { return a + b.v1; }, 0);
+        var avg = sum / pts.length;
+        var pk = pts.reduce(function(a, b) { return b.v1 > a.v1 ? b : a; }, pick(pts, 0));
+        kpiGrid.innerHTML =
+          '<div class="kpi"><div class="kpi-lbl">Cumulative Total</div><div class="kpi-val">' + fmt(sum) + '</div><div class="kpi-sub">' + y1Col + '</div></div>' +
+          '<div class="kpi k2"><div class="kpi-lbl">Entry Average</div><div class="kpi-val">' + fmt(avg) + '</div><div class="kpi-sub">Mean per record</div></div>' +
+          '<div class="kpi k3"><div class="kpi-lbl">Peak Performance</div><div class="kpi-val">' + fmt(pk.v1) + '</div><div class="kpi-sub">At: ' + pk.l + '</div></div>' +
+          '<div class="kpi k4"><div class="kpi-lbl">Active Records</div><div class="kpi-val">' + pts.length + '</div><div class="kpi-sub">Excludes Total/Avg rows</div></div>';
+      } else { kpiGrid.innerHTML = ''; }
+
+      // 2. Render Left Chart (Grouped Side-by-Side Bars or Trend Line)
+      var leftBox = document.getElementById('leftChart');
+      var leftLeg = document.getElementById('leftLegend');
+      var hasS2 = y2Col && pts.some(function(d) { return !isNaN(d.v2); });
+      document.getElementById('leftTitle').innerText = hasS2 ? (y1Col + ' vs ' + y2Col) : (y1Col + ' by ' + xCol);
+      document.getElementById('leftSub').innerText = hasS2 ? 'Grouped side-by-side comparison' : 'Single metric progression';
+
+      leftLeg.innerHTML = '<div class="leg-item"><span class="dot" style="background:#2563eb"></span>' + y1Col + '</div>' +
+        (hasS2 ? '<div class="leg-item"><span class="dot" style="background:#0d9488"></span>' + y2Col + '</div>' : '');
+
+      if (!pts.length) {
+        leftBox.innerHTML = '<div class="empty">Select a numeric column in <b>Primary Metric (Series 1)</b>.</div>';
+      } else if (leftMode === 'bar') {
+        var allVals = pts.map(function(d) { return Math.abs(d.v1); });
+        if (hasS2) allVals = allVals.concat(pts.map(function(d) { return isNaN(d.v2) ? 0 : Math.abs(d.v2); }));
+        var maxV = Math.max.apply(null, allVals.concat(1));
+
+        leftBox.innerHTML = pts.map(function(d) {
+          var w1 = Math.min(100, (Math.abs(d.v1) / maxV) * 100);
+          var w2 = hasS2 && !isNaN(d.v2) ? Math.min(100, (Math.abs(d.v2) / maxV) * 100) : 0;
+          var valTxt = hasS2 && !isNaN(d.v2) ? (fmt(d.v1) + ' / ' + fmt(d.v2)) : fmt(d.v1);
+          return '<div class="g-row"><div class="g-top"><span>' + d.l + '</span><span>' + valTxt + '</span></div>' +
+            '<div class="g-tracks"><div class="track ' + (hasS2 ? '' : 'single') + '"><div class="fill-1" style="width:' + w1 + '%"></div></div>' +
+            (hasS2 ? '<div class="track"><div class="fill-2" style="width:' + w2 + '%"></div></div>' : '') +
+            '</div></div>';
+        }).join('');
+      } else {
+        var W = 620, H = 250, pL = 55, pR = 20, pT = 20, pB = 38, pw = W - pL - pR, ph = H - pT - pB;
+        var vals1 = pts.map(function(d) { return d.v1; });
+        var vals2 = hasS2 ? pts.map(function(d) { return isNaN(d.v2) ? d.v1 : d.v2; }) : [];
+        var minV = Math.min.apply(null, vals1.concat(vals2).concat(0));
+        var maxLine = Math.max.apply(null, vals1.concat(vals2).concat(1));
+        var rng = (maxLine - minV) || 1;
+
+        var makePath = function(arr, color) {
+          var coords = arr.map(function(v, i) {
+            return { x: pL + (arr.length === 1 ? pw / 2 : (i / (arr.length - 1)) * pw), y: pT + ph - ((v - minV) / rng) * ph, v: v, l: pts[i].l };
+          });
+          var dStr = coords.map(function(p, i) { return (i ? 'L' : 'M') + p.x.toFixed(1) + ',' + p.y.toFixed(1); }).join(' ');
+          var dots = coords.map(function(p) { return '<circle cx="' + p.x + '" cy="' + p.y + '" r="3.8" fill="' + color + '"><title>' + p.l + ': ' + fmt(p.v) + '</title></circle>'; }).join('');
+          return '<path d="' + dStr + '" fill="none" stroke="' + color + '" stroke-width="2.5"/>' + dots;
+        };
+
+        var st = Math.ceil(pts.length / 7);
+        var xLbls = pts.filter(function(_, i) { return i % st === 0; }).map(function(d, idx) {
+          var origI = idx * st;
+          var x = pL + (pts.length === 1 ? pw / 2 : (origI / (pts.length - 1)) * pw);
+          return '<text x="' + x + '" y="' + (H - 10) + '" font-size="10.5" text-anchor="middle" fill="#64748b">' + d.l + '</text>';
+        }).join('');
+
+        leftBox.innerHTML = '<svg viewBox="0 0 ' + W + ' ' + H + '" style="width:100%;height:auto">' +
+          '<line x1="' + pL + '" y1="' + (pT + ph) + '" x2="' + (W - pR) + '" y2="' + (pT + ph) + '" stroke="#cbd5e1"/>' +
+          '<text x="' + (pL - 6) + '" y="' + (pT + 5) + '" font-size="10.5" text-anchor="end" fill="#64748b">' + fmt(maxLine) + '</text>' +
+          '<text x="' + (pL - 6) + '" y="' + (pT + ph) + '" font-size="10.5" text-anchor="end" fill="#64748b">' + fmt(minV) + '</text>' +
+          makePath(vals1, '#2563eb') + (hasS2 ? makePath(vals2, '#0d9488') : '') + xLbls + '</svg>';
+      }
+
+      // 3. Render Right Chart (Proportional Donut Breakdown or Series 2 Bars)
+      var rightBox = document.getElementById('rightChart');
+      if (rightMode === 'donut') {
+        document.getElementById('rightTitle').innerText = 'Proportional Share (' + y1Col + ')';
+        document.getElementById('rightSub').innerText = 'Percentage contribution by ' + xCol;
+        var posPts = pts.filter(function(d) { return d.v1 > 0; }).slice(0, 10);
+        var totalPos = posPts.reduce(function(a, b) { return a + b.v1; }, 0);
+        if (!totalPos) {
+          rightBox.innerHTML = '<div class="empty">No positive values to display in Donut view.</div>';
+        } else {
+          var r = 68, cx = 90, cy = 90, circ = 2 * Math.PI * r, offset = 0;
+          var slices = posPts.map(function(d, idx) {
+            var frac = d.v1 / totalPos;
+            var dash = frac * circ;
+            var col = COLORS[idx % COLORS.length];
+            var seg = '<circle r="' + r + '" cx="' + cx + '" cy="' + cy + '" fill="transparent" stroke="' + col + '" stroke-width="26" stroke-dasharray="' + dash.toFixed(2) + ' ' + circ.toFixed(2) + '" stroke-dashoffset="' + (-offset).toFixed(2) + '"><title>' + d.l + ': ' + fmt(d.v1) + ' (' + (frac * 100).toFixed(1) + '%)</title></circle>';
+            offset += dash;
+            return seg;
+          }).join('');
+
+          var listHtml = posPts.map(function(d, idx) {
+            var pct = ((d.v1 / totalPos) * 100).toFixed(1);
+            var col = COLORS[idx % COLORS.length];
+            return '<div class="d-item"><div class="d-left"><span class="dot" style="background:' + col + '"></span><span title="' + d.l + '">' + d.l + '</span></div><span><b>' + pct + '%</b> (' + fmt(d.v1) + ')</span></div>';
+          }).join('');
+
+          rightBox.innerHTML = '<div class="donut-wrap"><svg width="180" height="180" viewBox="0 0 180 180" style="transform:rotate(-90deg)">' + slices + '</svg><div class="donut-list">' + listHtml + '</div></div>';
+        }
+      } else {
+        var targetCol = hasS2 ? y2Col : y1Col;
+        document.getElementById('rightTitle').innerText = targetCol + ' Distribution';
+        document.getElementById('rightSub').innerText = hasS2 ? 'Independent view of Series 2' : 'Select a Compare Metric (Series 2) above';
+        var s2Pts = cleanRows.map(function(r) { return { l: r[xCol] || '—', v: toNum(r[targetCol]) }; }).filter(function(d) { return !isNaN(d.v); });
+        if (!s2Pts.length) {
+          rightBox.innerHTML = '<div class="empty">No numeric values in ' + targetCol + '.</div>';
+        } else {
+          var m2 = Math.max.apply(null, s2Pts.map(function(d) { return Math.abs(d.v); }).concat(1));
+          rightBox.innerHTML = s2Pts.map(function(d) {
+            var w = Math.min(100, (Math.abs(d.v) / m2) * 100);
+            return '<div class="g-row"><div class="g-top"><span>' + d.l + '</span><span>' + fmt(d.v) + '</span></div><div class="track single"><div class="fill-2" style="width:' + w + '%"></div></div></div>';
+          }).join('');
+        }
+      }
+
+      // 4. Render Table
+      var q = qInput.value.toLowerCase();
+      var rows = q ? curSec.records.filter(function(r) { return curSec.headers.some(function(h) { return String(r[h]).toLowerCase().indexOf(q) !== -1; }); }) : curSec.records;
+      document.getElementById('tblTitle').innerText = 'Detailed Records (' + rows.length + ' rows)';
+      document.getElementById('tblWrap').innerHTML = '<table><thead><tr>' + curSec.headers.map(function(h) { return '<th>' + h + '</th>'; }).join('') + '</tr></thead><tbody>' +
+        rows.map(function(r) { return '<tr class="' + (isSum(r, xCol) ? 'sum' : '') + '">' + curSec.headers.map(function(h) { return '<td>' + (r[h] || '') + '</td>'; }).join('') + '</tr>'; }).join('') + '</tbody></table>';
+    }
+
+    secSel.onchange = function() { pickSection(Number(secSel.value)); };
+    xSel.onchange = draw; y1Sel.onchange = draw; y2Sel.onchange = draw; qInput.oninput = draw;
+    loadFile(pick(SHEETS, 0).file);
+  </script>
+</body>
+</html>
