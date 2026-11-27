@@ -1,0 +1,98 @@
+html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Excel Auto-Updating Dashboard</title>
+  <script src="https://sheetjs.com"></script>
+  <script src="https://jsdelivr.net"></script>
+  <style>
+    body { font-family: system-ui, sans-serif; margin: 2rem; background: #f8fafc; color: #1e293b; }
+    .container { max-width: 1000px; margin: auto; }
+    .card { background: white; padding: 1.5rem; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); margin-bottom: 1.5rem; }
+    table { width: 100%; border-collapse: collapse; margin-top: 1rem; }
+    th, td { text-align: left; padding: 0.75rem; border-bottom: 1px solid #e2e8f0; }
+    th { background: #f1f5f9; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Live Excel Dashboard</h1>
+    <p id="status">Loading data from data.xlsx...</p>
+
+    <div class="card">
+      <canvas id="dashboardChart" height="100"></canvas>
+    </div>
+
+    <div class="card">
+      <h3>Raw Data Preview</h3>
+      <div id="tableContainer"></div>
+    </div>
+  </div>
+
+  <script>
+    async function loadExcelDashboard() {
+      try {
+        const response = await fetch('./data.xlsx?t=' + new Date().getTime());
+        if (!response.ok) throw new Error('Could not fetch data.xlsx');
+        
+        const arrayBuffer = await response.arrayBuffer();
+        const workbook = XLSX.read(arrayBuffer, { type: 'array' });
+        
+        const firstSheetName = workbook.SheetNames[0];
+        const worksheet = workbook.Sheets[firstSheetName];
+        const jsonData = XLSX.utils.sheet_to_json(worksheet);
+        
+        if (jsonData.length === 0) {
+          document.getElementById('status').innerText = 'Excel sheet is empty.';
+          return;
+        }
+
+        document.getElementById('status').innerText = `Last loaded: ${new Date().toLocaleString()} (${jsonData.length} rows)`;
+        
+        renderChart(jsonData);
+        renderTable(jsonData);
+      } catch (error) {
+        document.getElementById('status').innerText = 'Error loading data: ' + error.message;
+      }
+    }
+
+    function renderChart(data) {
+      const columns = Object.keys(data[0]);
+      const labelColumn = columns[0]; // Uses Column A for labels
+      const valueColumn = columns[1]; // Uses Column B for bar values
+
+      const labels = data.map(row => row[labelColumn]);
+      const values = data.map(row => Number(row[valueColumn]) || 0);
+
+      const ctx = document.getElementById('dashboardChart').getContext('2d');
+      new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: labels,
+          datasets: [{
+            label: valueColumn,
+            data: values,
+            backgroundColor: '#3b82f6',
+            borderRadius: 4
+          }]
+        },
+        options: { responsive: true }
+      });
+    }
+
+    function renderTable(data) {
+      const headers = Object.keys(data[0]);
+      let html = '<table><thead><tr>' + headers.map(h => `<th>${h}</th>`).join('') + '</tr></thead><tbody>';
+      data.forEach(row => {
+        html += '<tr>' + headers.map(h => `<td>${row[h] ?? ''}</td>`).join('') + '</tr>';
+      });
+      html += '</tbody></table>';
+      document.getElementById('tableContainer').innerHTML = html;
+    }
+
+    loadExcelDashboard();
+  </script>
+</body>
+</html>
