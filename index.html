@@ -4,8 +4,6 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Excel Auto-Updating Dashboard</title>
-  <!-- Uses the xlsx.full.min.js file already in your repository -->
-  <script src="./xlsx.full.min.js"></script>
   <style>
     body { font-family: system-ui, sans-serif; margin: 2rem; background: #f8fafc; color: #1e293b; }
     .container { max-width: 1000px; margin: auto; }
@@ -23,7 +21,7 @@
 <body>
   <div class="container">
     <h1>Live Excel Dashboard</h1>
-    <p id="status">Reading data.xlsx...</p>
+    <p id="status">Loading data.csv...</p>
 
     <div class="card">
       <h3 id="chartTitle">Overview</h3>
@@ -37,26 +35,44 @@
   </div>
 
   <script>
-    async function loadExcelDashboard() {
+    function parseCSV(text) {
+      const rows = [];
+      let row = [], cell = '', inQuotes = false;
+      for (let i = 0; i < text.length; i++) {
+        const ch = text[i], next = text[i + 1];
+        if (ch === '"' && inQuotes && next === '"') { cell += '"'; i++; }
+        else if (ch === '"') { inQuotes = !inQuotes; }
+        else if (ch === ',' && !inQuotes) { row.push(cell.trim()); cell = ''; }
+        else if ((ch === '\n' || ch === '\r') && !inQuotes) {
+          if (ch === '\r' && next === '\n') i++;
+          row.push(cell.trim());
+          if (row.some(v => v !== '')) rows.push(row);
+          row = []; cell = '';
+        } else { cell += ch; }
+      }
+      if (cell.length > 0 || row.length > 0) {
+        row.push(cell.trim());
+        if (row.some(v => v !== '')) rows.push(row);
+      }
+      if (rows.length < 2) return [];
+      const headers = rows.at(0);
+      return rows.slice(1).map(r => {
+        const obj = {};
+        headers.forEach((h, idx) => obj[h || `Col ${idx + 1}`] = r[idx] ?? '');
+        return obj;
+      });
+    }
+
+    async function loadDashboard() {
       try {
-        if (typeof XLSX === 'undefined') {
-          throw new Error('xlsx.full.min.js did not load properly.');
-        }
+        const response = await fetch('./data.csv?t=' + new Date().getTime());
+        if (!response.ok) throw new Error('Could not find data.csv (HTTP ' + response.status + ')');
 
-        const response = await fetch('./data.xlsx?t=' + new Date().getTime());
-        if (!response.ok) {
-          throw new Error('Could not load data.xlsx (HTTP ' + response.status + ')');
-        }
+        const csvText = await response.text();
+        const jsonData = parseCSV(csvText);
 
-        const arrayBuffer = await response.arrayBuffer();
-        const workbook = XLSX.read(arrayBuffer, { type: 'array' });
-
-        const firstSheetName = workbook.SheetNames.at(0);
-        const worksheet = workbook.Sheets[firstSheetName];
-        const jsonData = XLSX.utils.sheet_to_json(worksheet);
-
-        if (!jsonData || jsonData.length === 0) {
-          document.getElementById('status').innerText = 'Excel sheet is empty.';
+        if (jsonData.length === 0) {
+          document.getElementById('status').innerText = 'CSV file is empty.';
           return;
         }
 
@@ -69,19 +85,19 @@
     }
 
     function renderChart(data) {
-      const firstRow = data.at(0);
-      const columns = Object.keys(firstRow);
+      const columns = Object.keys(data.at(0));
       const labelCol = columns.at(0); // Column A
       const valueCol = columns.at(1); // Column B
 
       document.getElementById('chartTitle').innerText = `${valueCol} by ${labelCol}`;
 
-      const numericValues = data.map(r => Number(r[valueCol]) || 0);
+      const cleanNum = v => Number(String(v).replace(/[^0-9.-]+/g, '')) || 0;
+      const numericValues = data.map(r => cleanNum(r[valueCol]));
       const maxVal = Math.max(...numericValues, 1);
 
       const chartHtml = data.map(row => {
         const label = row[labelCol] ?? '';
-        const val = Number(row[valueCol]) || 0;
+        const val = cleanNum(row[valueCol]);
         const pct = Math.max(0, (val / maxVal) * 100);
         return `
           <div class="bar-row">
@@ -105,7 +121,7 @@
       document.getElementById('tableContainer').innerHTML = html;
     }
 
-    window.addEventListener('DOMContentLoaded', loadExcelDashboard);
+    loadDashboard();
   </script>
 </body>
 </html>
