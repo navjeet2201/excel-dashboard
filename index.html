@@ -5,210 +5,86 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>UMB Division • Railway Operations Dashboard</title>
   <style>
-    :root {
-      --bg: #f1f5f9;
-      --surface: #ffffff;
-      --primary: #1e3a8a;
-      --accent: #2563eb;
-      --accent-light: #dbeafe;
-      --text: #0f172a;
-      --muted: #64748b;
-      --border: #e2e8f0;
-    }
     * { box-sizing: border-box; }
-    body { font-family: system-ui, -apple-system, sans-serif; margin: 0; background: var(--bg); color: var(--text); }
-    
-    /* Top Navigation Banner */
-    .topbar {
-      background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 100%);
-      color: white;
-      padding: 1.25rem 2rem;
-      box-shadow: 0 2px 8px rgba(15, 23, 42, 0.15);
-    }
-    .topbar-inner {
-      max-width: 1320px;
-      margin: auto;
-      display: flex;
-      flex-wrap: wrap;
-      justify-content: space-between;
-      align-items: center;
-      gap: 1rem;
-    }
-    .brand h1 { margin: 0; font-size: 1.35rem; letter-spacing: -0.01em; }
-    .brand p { margin: 0.2rem 0 0; font-size: 0.85rem; color: #93c5fd; }
-
-    .container { max-width: 1320px; margin: 1.5rem auto; padding: 0 1.5rem; }
-
-    /* Control Bar */
-    .control-panel {
-      background: var(--surface);
-      padding: 1rem 1.25rem;
-      border-radius: 10px;
-      border: 1px solid var(--border);
-      display: flex;
-      flex-wrap: wrap;
-      gap: 1rem;
-      align-items: flex-end;
-      margin-bottom: 1.25rem;
-      box-shadow: 0 1px 2px rgba(0,0,0,0.04);
-    }
-    .field { display: flex; flex-direction: column; gap: 0.3rem; min-width: 170px; flex: 1; }
-    .field label { font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; color: var(--muted); }
-    select, input[type="text"] {
-      padding: 0.55rem 0.75rem;
-      font-size: 0.92rem;
-      border-radius: 6px;
-      border: 1px solid #cbd5e1;
-      background: #fff;
-      color: var(--text);
-      font-weight: 500;
-    }
-    select:focus, input:focus { outline: 2px solid var(--accent); border-color: var(--accent); }
-
-    /* KPI Cards */
-    .kpi-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
-      gap: 1rem;
-      margin-bottom: 1.25rem;
-    }
-    .kpi-card {
-      background: var(--surface);
-      padding: 1.15rem 1.25rem;
-      border-radius: 10px;
-      border: 1px solid var(--border);
-      border-left: 4px solid var(--accent);
-      box-shadow: 0 1px 2px rgba(0,0,0,0.04);
-    }
-    .kpi-label { font-size: 0.78rem; font-weight: 600; color: var(--muted); text-transform: uppercase; }
-    .kpi-value { font-size: 1.65rem; font-weight: 700; margin: 0.3rem 0 0.15rem; font-variant-numeric: tabular-nums; color: var(--text); }
-    .kpi-sub { font-size: 0.8rem; color: var(--muted); }
-
-    /* Cards & Chart Area */
-    .card {
-      background: var(--surface);
-      padding: 1.5rem;
-      border-radius: 10px;
-      border: 1px solid var(--border);
-      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-      margin-bottom: 1.5rem;
-    }
-    .card-header {
-      display: flex;
-      flex-wrap: wrap;
-      justify-content: space-between;
-      align-items: center;
-      gap: 1rem;
-      margin-bottom: 1.25rem;
-      padding-bottom: 0.75rem;
-      border-bottom: 1px solid var(--border);
-    }
-    .card-header h3 { margin: 0; font-size: 1.05rem; }
-
-    .toggle-group { display: inline-flex; background: var(--bg); padding: 3px; border-radius: 7px; border: 1px solid var(--border); }
-    .toggle-btn {
-      border: none;
-      background: transparent;
-      padding: 0.4rem 0.85rem;
-      font-size: 0.85rem;
-      font-weight: 600;
-      color: var(--muted);
-      border-radius: 5px;
-      cursor: pointer;
-    }
-    .toggle-btn.active { background: var(--surface); color: var(--accent); box-shadow: 0 1px 2px rgba(0,0,0,0.08); }
-
-    /* Bar Graph */
-    .bar-row { display: flex; align-items: center; margin-bottom: 0.65rem; gap: 0.85rem; }
-    .bar-label { width: 170px; font-weight: 600; font-size: 0.86rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-    .bar-track { flex: 1; background: #e2e8f0; border-radius: 6px; height: 24px; overflow: hidden; position: relative; }
-    .bar-fill {
-      background: linear-gradient(90deg, #1d4ed8, #3b82f6);
-      height: 100%;
-      border-radius: 6px;
-      transition: width 0.35s ease;
-    }
-    .bar-value { width: 115px; text-align: right; font-variant-numeric: tabular-nums; font-size: 0.88rem; font-weight: 700; }
-
-    /* Table */
-    .table-wrap { overflow-x: auto; max-height: 480px; border: 1px solid var(--border); border-radius: 8px; }
-    table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
-    th, td { text-align: left; padding: 0.6rem 0.75rem; border-bottom: 1px solid var(--border); white-space: nowrap; }
-    th { background: #f8fafc; font-weight: 700; position: sticky; top: 0; z-index: 2; border-bottom: 2px solid #cbd5e1; }
-    tr:hover td { background: #f1f5f9; }
-    tr.summary-row td { background: #eff6ff; font-weight: 700; color: #1e3a8a; }
-    .empty-msg { color: var(--muted); padding: 1.5rem; text-align: center; background: #f8fafc; border-radius: 8px; }
+    body { font-family: system-ui, sans-serif; margin: 0; background: #f1f5f9; color: #0f172a; }
+    .topbar { background: linear-gradient(135deg, #0f172a, #1e3a8a); color: #fff; padding: 1.2rem 2rem; }
+    .topbar-inner { max-width: 1280px; margin: auto; display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 1rem; }
+    .topbar h1 { margin: 0; font-size: 1.3rem; }
+    .topbar p { margin: 0.25rem 0 0; font-size: 0.85rem; color: #93c5fd; }
+    .container { max-width: 1280px; margin: 1.5rem auto; padding: 0 1.25rem; }
+    .panel, .card { background: #fff; padding: 1.25rem; border-radius: 10px; border: 1px solid #e2e8f0; margin-bottom: 1.25rem; }
+    .panel { display: flex; flex-wrap: wrap; gap: 1rem; }
+    .field { display: flex; flex-direction: column; gap: 0.3rem; flex: 1; min-width: 170px; }
+    .field label { font-size: 0.72rem; font-weight: 700; text-transform: uppercase; color: #64748b; }
+    select, input { padding: 0.5rem 0.75rem; font-size: 0.9rem; border-radius: 6px; border: 1px solid #cbd5e1; background: #fff; }
+    .kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 1.25rem; }
+    .kpi { background: #fff; padding: 1rem 1.25rem; border-radius: 10px; border: 1px solid #e2e8f0; border-left: 4px solid #2563eb; }
+    .kpi small { font-size: 0.75rem; font-weight: 700; color: #64748b; text-transform: uppercase; }
+    .kpi div { font-size: 1.55rem; font-weight: 700; margin: 0.25rem 0; }
+    .card-top { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 1rem; margin-bottom: 1rem; padding-bottom: 0.75rem; border-bottom: 1px solid #e2e8f0; }
+    .btn { border: 1px solid #cbd5e1; background: #f8fafc; padding: 0.35rem 0.8rem; border-radius: 6px; font-weight: 600; cursor: pointer; }
+    .btn.active { background: #2563eb; color: #fff; border-color: #2563eb; }
+    .bar-row { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.6rem; }
+    .bar-lbl { width: 170px; font-size: 0.85rem; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .bar-bg { flex: 1; background: #e2e8f0; height: 22px; border-radius: 5px; overflow: hidden; }
+    .bar-fill { height: 100%; background: #2563eb; transition: width 0.3s; }
+    .bar-val { width: 105px; text-align: right; font-size: 0.85rem; font-weight: 700; }
+    .tbl-wrap { overflow-x: auto; max-height: 450px; border: 1px solid #e2e8f0; border-radius: 8px; }
+    table { width: 100%; border-collapse: collapse; font-size: 0.84rem; }
+    th, td { padding: 0.55rem 0.75rem; border-bottom: 1px solid #e2e8f0; white-space: nowrap; text-align: left; }
+    th { background: #f8fafc; position: sticky; top: 0; font-weight: 700; }
+    tr.sum td { background: #eff6ff; font-weight: 700; color: #1e3a8a; }
   </style>
 </head>
 <body>
-
   <div class="topbar">
     <div class="topbar-inner">
-      <div class="brand">
+      <div>
         <h1>Ambala Division (UMB) • Freight & Operations Portal</h1>
-        <p id="status">Initializing live repository feed...</p>
-      </div>
-      <div style="font-size:0.82rem; background:rgba(255,255,255,0.12); padding:0.4rem 0.8rem; border-radius:20px;">
-        Auto-Synced with GitHub CSVs
+        <p id="status">Loading dashboard...</p>
       </div>
     </div>
   </div>
 
   <div class="container">
-    <!-- Main Selectors -->
-    <div class="control-panel">
-      <div class="field">
-        <label for="sheetSelect">1. Report / Sheet</label>
-        <select id="sheetSelect"></select>
-      </div>
-      <div class="field">
-        <label for="sectionSelect">2. Sub-Table / Period</label>
-        <select id="sectionSelect"></select>
-      </div>
-      <div class="field">
-        <label for="xColSelect">3. Category / Date (X-Axis)</label>
-        <select id="xColSelect"></select>
-      </div>
-      <div class="field">
-        <label for="yColSelect">4. Metric to Plot (Y-Axis)</label>
-        <select id="yColSelect"></select>
-      </div>
+    <div class="panel">
+      <div class="field"><label>1. Report / Sheet</label><select id="sheetSel"></select></div>
+      <div class="field"><label>2. Sub-Table / Period</label><select id="secSel"></select></div>
+      <div class="field"><label>3. Category / Date (X)</label><select id="xSel"></select></div>
+      <div class="field"><label>4. Metric (Y)</label><select id="ySel"></select></div>
     </div>
 
-    <!-- KPI Cards -->
-    <div class="kpi-grid" id="kpiGrid"></div>
+    <div class="kpis" id="kpiBox"></div>
 
-    <!-- Visualization Card -->
     <div class="card">
-      <div class="card-header">
-        <h3 id="chartTitle">Performance Chart</h3>
-        <div class="toggle-group">
-          <button class="toggle-btn active" id="btnBar" onclick="setChartType('bar')">Bar Chart</button>
-          <button class="toggle-btn" id="btnLine" onclick="setChartType('line')">Trend Line</button>
+      <div class="card-top">
+        <h3 id="chartTitle" style="margin:0;">Chart</h3>
+        <div>
+          <button class="btn active" id="bBar" onclick="setMode('bar')">Bar Graph</button>
+          <button class="btn" id="bLine" onclick="setMode('line')">Trend Line</button>
         </div>
       </div>
-      <div id="chartContainer"></div>
+      <div id="chartBox"></div>
     </div>
 
-    <!-- Data Table Card -->
     <div class="card">
-      <div class="card-header">
-        <h3 id="tableTitle">Detailed Records</h3>
-        <input type="text" id="searchInput" placeholder="Filter table rows..." style="max-width:250px;">
+      <div class="card-top">
+        <h3 id="tblTitle" style="margin:0;">Records</h3>
+        <input type="text" id="qInput" placeholder="Search rows...">
       </div>
-      <div class="table-wrap" id="tableContainer"></div>
+      <div class="tbl-wrap" id="tblBox"></div>
     </div>
   </div>
 
   <script>
-    const SHEETS = [
-      { label: "Earning (25-26 & 26-27)", file: "data.csv-Earning.csv" },
-      { label: "Loading 25-26 (Monthly & Annual)", file: "data.csv-LOADING-25-26.csv" },
-      { label: "Loading 26-27 (Monthly & Annual)", file: "data.csv-LOADING-26-27.csv" },
+    var SHEETS = [
+      { label: "Earning", file: "data.csv-Earning.csv" },
+      { label: "Loading 25-26", file: "data.csv-LOADING-25-26.csv" },
+      { label: "Loading 26-27", file: "data.csv-LOADING-26-27.csv" },
       { label: "Loading Comparison", file: "data.csv-loading comparison.csv" },
-      { label: "Interchange (UMB Division)", file: "data.csv-INTERCHANGE.csv" },
-      { label: "Lead (Average Lead)", file: "data.csv-Load.csv" },
-      { label: "Loco Utilization (Diesel & Electric)", file: "data.csv-Loco Utilization.csv" },
+      { label: "Interchange", file: "data.csv-INTERCHANGE.csv" },
+      { label: "Lead", file: "data.csv-Load.csv" },
+      { label: "Loco Utilization", file: "data.csv-Loco Utilization.csv" },
       { label: "Long Haul & Crack", file: "data.csv-Long Haul & Crack.csv" },
       { label: "NTKM Originating", file: "data.csv-NTKM ORIGINATING.csv" },
       { label: "NTKM Per Wagon Day", file: "data.csv-NTKM PER WAGON DAY.csv" },
@@ -227,259 +103,162 @@
       { label: "Index", file: "data.csv-INDEX.csv" }
     ];
 
-    const sheetSelect = document.getElementById('sheetSelect');
-    const sectionSelect = document.getElementById('sectionSelect');
-    const xColSelect = document.getElementById('xColSelect');
-    const yColSelect = document.getElementById('yColSelect');
-    const searchInput = document.getElementById('searchInput');
+    var sheetSel = document.getElementById('sheetSel'), secSel = document.getElementById('secSel');
+    var xSel = document.getElementById('xSel'), ySel = document.getElementById('ySel'), qInput = document.getElementById('qInput');
+    var sections = [], curSec = null, mode = 'bar';
 
-    let parsedSections = [];
-    let activeSection = null;
-    let chartType = 'bar';
+    function pick(arr, idx) { return arr.slice(idx, idx + 1).shift(); }
+    SHEETS.forEach(function(s) { sheetSel.add(new Option(s.label, s.file)); });
 
-    SHEETS.forEach(s => sheetSelect.add(new Option(s.label, s.file)));
+    function parseCSV(text) {
+      var rows = [], row = [], cell = '', q = false;
+      for (var i = 0; i < text.length; i++) {
+        var ch = text.charAt(i), nx = text.charAt(i + 1);
+        if (ch === '"' && q && nx === '"') { cell += '"'; i++; }
+        else if (ch === '"') { q = !q; }
+        else if (ch === ',' && !q) { row.push(cell.trim()); cell = ''; }
+        else if ((ch === '\n' || ch === '\r') && !q) {
+          if (ch === '\r' && nx === '\n') i++;
+          row.push(cell.trim()); rows.push(row); row = []; cell = '';
+        } else { cell += ch; }
+      }
+      if (cell || row.length) { row.push(cell.trim()); rows.push(row); }
+      return rows;
+    }
 
-    function parseRawCSV(text) {
-      const rows = [];
-      let row = [], cell = '', inQuotes = false;
-      for (let i = 0; i < text.length; i++) {
-        const ch = text[i], next = text[i + 1];
-        if (ch === '"' && inQuotes && next === '"') { cell += '"'; i++; }
-        else if (ch === '"') { inQuotes = !inQuotes; }
-        else if (ch === ',' && !inQuotes) { row.push(cell.trim()); cell = ''; }
-else if ((ch === '\n' || ch === '\r') && !inQuotes) {
-if (ch === '\r' && next === '\n') i++;
-row.push(cell.trim());
-rows.push(row);
-row = []; cell = '';
-} else { cell += ch; }
-}
-if (cell.length > 0 || row.length > 0) { row.push(cell.trim()); rows.push(row); }
-return rows;
-}
-const extractNum = val => {
-if (val === null || val === undefined) return NaN;
-const s = String(val).trim();
-if (!s || s.startsWith('#') || s.includes('/')) return NaN;
-const cleaned = s.replace(/,/g, '').replace(/%/g, '');
-return isNaN(Number(cleaned)) ? NaN : Number(cleaned);
-};
-// Splits multi-table Railway CSVs into clean selectable blocks
-function splitIntoSections(rows) {
-const blocks = [];
-let currentBlock = [];
-let pendingTitle = '';
-rows.forEach(r => {
-const nonEmpty = r.filter(c => c !== '' && !c.startsWith('#'));
-if (nonEmpty.length === 0) {
-if (currentBlock.length >= 2) {
-blocks.push({ title: pendingTitle, rows: currentBlock });
-currentBlock = [];
-pendingTitle = '';
-}
-} else if (nonEmpty.length === 1 && currentBlock.length === 0) {
-pendingTitle = nonEmpty.at(0);
-} else {
-currentBlock.push(r);
-}
-});
-if (currentBlock.length >= 2) {
-blocks.push({ title: pendingTitle, rows: currentBlock });
-}
-return blocks.map((b, idx) => {
-// Find the header row (first row with >= 2 filled cells)
-let hIdx = b.rows.findIndex(r => r.filter(c => c !== '').length >= 2);
-if (hIdx === -1) hIdx = 0;
-// If row before header has a title, capture it
-if (!b.title && hIdx > 0) {
-const prev = b.rows.at(hIdx - 1).filter(c => c !== '');
-if (prev.length > 0) b.title = prev.at(0);
-}
-const rawHeader = b.rows[hIdx];
-// Determine active column indices that have data in header or body
-const maxCols = Math.max(...b.rows.slice(hIdx).map(r => r.length));
-const activeColIndices = [];
-for (let c = 0; c < maxCols; c++) {
-const hasHeader = (rawHeader[c] || '') !== '';
-const hasBody = b.rows.slice(hIdx + 1).some(r => (r[c] || '') !== '');
-if (hasHeader || hasBody) activeColIndices.push(c);
-}
-// Deduplicate column names cleanly
-const seenNames = {};
-const headers = activeColIndices.map((cIdx, i) => {
-let name = rawHeader[cIdx] || (i === 0 ? 'Item / Category' : Col ${cIdx + 1});
-name = name.replace(/\s+/g, ' ').trim();
-if (seenNames[name]) {
-seenNames[name]++;
-name = ${name} (${seenNames[name]});
-} else {
-seenNames[name] = 1;
-}
-return name;
-});
-const records = b.rows.slice(hIdx + 1)
-.filter(r => r.some(c => c !== ''))
-.map(r => {
-const obj = {};
-activeColIndices.forEach((cIdx, i) => {
-let val = r[cIdx] ?? '';
-if (val.startsWith('#')) val = '—';
-obj[headers[i]] = val;
-});
-return obj;
-});
-// Auto-label the section meaningfully
-let sectionLabel = b.title;
-if (!sectionLabel) {
-const sampleHeaders = headers.slice(1, 4).join(', ');
-sectionLabel = Table ${idx + 1} (${sampleHeaders || headers.at(0)});
-}
-return { label: sectionLabel, headers, records };
-}).filter(s => s.records.length > 0);
-}
-async function loadSheet(filename) {
-document.getElementById('status').innerText = Loading ${filename}...;
-try {
-const res = await fetch('./' + encodeURIComponent(filename) + '?t=' + Date.now());
-if (!res.ok) throw new Error(HTTP ${res.status});
-const text = await res.text();
-const rawRows = parseRawCSV(text);
-parsedSections = splitIntoSections(rawRows);
-sectionSelect.innerHTML = '';
-if (parsedSections.length === 0) {
-document.getElementById('status').innerText = ${filename} has no structured tables.;
-return;
-}
-parsedSections.forEach((sec, idx) => {
-sectionSelect.add(new Option(sec.label, idx));
-});
-document.getElementById('status').innerText = Active File: ${filename} • ${parsedSections.length} table(s) detected;
-selectSection(0);
-} catch (err) {
-document.getElementById('status').innerText = Error: ${err.message};
-}
-}
-function selectSection(idx) {
-activeSection = parsedSections[idx];
-if (!activeSection) return;
-const { headers, records } = activeSection;
-xColSelect.innerHTML = '';
-yColSelect.innerHTML = '';
-headers.forEach(h => {
-xColSelect.add(new Option(h, h));
-yColSelect.add(new Option(h, h));
-});
-// Pick best label column (prefer Date/Month/Commodity over S.NO)
-const bestX = headers.find(h => /date|month|commodity|period|division/i.test(h)) || headers.at(0);
-// Pick best numeric metric column (skip S.NO / Sr NO)
-const bestY = headers.find(h => {
-if (/s.?no|sr\s*no/i.test(h)) return false;
-return records.some(r => !isNaN(extractNum(r[h])));
-}) || headers.at(1) || headers.at(0);
-xColSelect.value = bestX;
-yColSelect.value = bestY;
-searchInput.value = '';
-updateDashboard();
-}
-function isSummaryRow(row, labelCol) {
-const firstTwo = Object.values(row).slice(0, 2).join(' ').toLowerCase();
-const labelVal = String(row[labelCol] || '').toLowerCase();
-return /\b(total|avg|average|upto)\b/.test(firstTwo) || /\b(total|avg|average)\b/.test(labelVal);
-}
-function updateDashboard() {
-if (!activeSection) return;
-const labelCol = xColSelect.value;
-const valueCol = yColSelect.value;
-// Exclude TOTAL / AVG summary rows from chart & KPI math so totals don't double-count
-const dataRows = activeSection.records.filter(r => !isSummaryRow(r, labelCol));
-const plotted = dataRows
-.map(r => ({ label: r[labelCol] || '—', val: extractNum(r[valueCol]) }))
-.filter(d => !isNaN(d.val));
-renderKPIs(plotted, valueCol);
-renderChart(plotted, labelCol, valueCol);
-renderTable(activeSection.headers, activeSection.records, labelCol);
-}
-function renderKPIs(plotted, metricName) {
-const grid = document.getElementById('kpiGrid');
-if (plotted.length === 0) {
-grid.innerHTML = '';
-return;
-}
-const vals = plotted.map(d => d.val);
-const sum = vals.reduce((a, b) => a + b, 0);
-const avg = sum / vals.length;
-const maxItem = plotted.reduce((best, cur) => cur.val > best.val ? cur : best, plotted.at(0));
-const fmt = n => n.toLocaleString('en-IN', { maximumFractionDigits: 2 });
-grid.innerHTML = <div class="kpi-card"> <div class="kpi-label">Total (${metricName})</div> <div class="kpi-value">${fmt(sum)}</div> <div class="kpi-sub">Across ${plotted.length} active entries</div> </div> <div class="kpi-card" style="border-left-color:#0d9488;"> <div class="kpi-label">Average per Entry</div> <div class="kpi-value">${fmt(avg)}</div> <div class="kpi-sub">Mean value</div> </div> <div class="kpi-card" style="border-left-color:#d97706;"> <div class="kpi-label">Peak Value</div> <div class="kpi-value">${fmt(maxItem.val)}</div> <div class="kpi-sub">Recorded at: ${maxItem.label}</div> </div>;
-}
-function setChartType(type) {
-chartType = type;
-document.getElementById('btnBar').classList.toggle('active', type === 'bar');
-document.getElementById('btnLine').classList.toggle('active', type === 'line');
-updateDashboard();
-}
-function renderChart(plotted, labelCol, valueCol) {
-const container = document.getElementById('chartContainer');
-document.getElementById('chartTitle').innerText = ${valueCol} by ${labelCol};
-if (plotted.length === 0) {
-container.innerHTML = <div class="empty-msg">No numeric data in "<strong>${valueCol}</strong>". Pick a numeric column from <strong>4. Metric to Plot</strong> above.</div>;
-return;
-}
-if (chartType === 'bar') {
-const maxVal = Math.max(...plotted.map(d => Math.abs(d.val)), 1);
-container.innerHTML = plotted.map(d => {
-const pct = Math.min(100, Math.max(0, (Math.abs(d.val) / maxVal) * 100));
-const isNeg = d.val < 0;
-return <div class="bar-row"> <div class="bar-label" title="${d.label}">${d.label}</div> <div class="bar-track"> <div class="bar-fill" style="width:${pct}%; background:${isNeg ? '#dc2626' : 'linear-gradient(90deg, #1d4ed8, #3b82f6)'}"></div> </div> <div class="bar-value" style="color:${isNeg ? '#dc2626' : 'inherit'}">${d.val.toLocaleString('en-IN', { maximumFractionDigits: 2 })}</div> </div>;
-}).join('');
-} else {
-// Native Responsive SVG Trend Line Chart
-const w = 960, h = 280, padL = 65, padR = 25, padT = 25, padB = 45;
-const plotW = w - padL - padR, plotH = h - padT - padB;
-const vals = plotted.map(d => d.val);
-const minV = Math.min(...vals, 0);
-const maxV = Math.max(...vals, 1);
-const range = (maxV - minV) || 1;
-const pts = plotted.map((d, i) => {
-const x = padL + (plotted.length === 1 ? plotW / 2 : (i / (plotted.length - 1)) * plotW);
-const y = padT + plotH - ((d.val - minV) / range) * plotH;
-return { x, y, label: d.label, val: d.val };
-});
-const pathD = pts.map((p, i) => ${i === 0 ? 'M' : 'L'} ${p.x.toFixed(1)} ${p.y.toFixed(1)}).join(' ');
-const areaD = ${pathD} L ${pts.at(-1).x.toFixed(1)} ${(padT + plotH).toFixed(1)} L ${pts.at(0).x.toFixed(1)} ${(padT + plotH).toFixed(1)} Z;
-const step = Math.ceil(pts.length / 10);
-const xLabels = pts.filter((_, i) => i % step === 0 || i === pts.length - 1)
-.map(p => <text x="${p.x}" y="${h - 12}" text-anchor="middle" font-size="11" fill="#64748b">${p.label}</text>).join('');
-const circles = pts.map(p => <circle cx="${p.x}" cy="${p.y}" r="4.5" fill="#1d4ed8" stroke="#fff" stroke-width="1.5"> <title>${p.label}: ${p.val.toLocaleString('en-IN')}</title> </circle>).join('');
-container.innerHTML = `
+    function toNum(v) {
+      var s = String(v == null ? '' : v).trim();
+      if (!s || s.indexOf('#') === 0 || s.indexOf('/') !== -1) return NaN;
+      var n = Number(s.replace(/,/g, '').replace(/%/g, ''));
+      return isNaN(n) ? NaN : n;
+    }
 
+    function buildSections(rows) {
+      var blocks = [], blk = [], title = '';
+      rows.forEach(function(r) {
+        var filled = r.filter(function(c) { return c !== '' && c.indexOf('#') !== 0; });
+        if (filled.length === 0) {
+          if (blk.length >= 2) { blocks.push({ title: title, rows: blk }); blk = []; title = ''; }
+        } else if (filled.length === 1 && blk.length === 0) {
+          title = pick(filled, 0);
+        } else { blk.push(r); }
+      });
+      if (blk.length >= 2) blocks.push({ title: title, rows: blk });
 
+      return blocks.map(function(b, idx) {
+        var hIdx = b.rows.findIndex(function(r) { return r.filter(function(c) { return c !== ''; }).length >= 2; });
+        if (hIdx < 0) hIdx = 0;
+        if (!b.title && hIdx > 0) b.title = pick(b.rows[hIdx - 1].filter(function(c) { return c !== ''; }), 0) || '';
 
-${circles}
-${xLabels}
+        var rawH = b.rows[hIdx], cols = [], seen = {};
+        var maxC = Math.max.apply(null, b.rows.slice(hIdx).map(function(r) { return r.length; }));
+        for (var c = 0; c < maxC; c++) {
+          if ((rawH[c] || '') !== '' || b.rows.slice(hIdx + 1).some(function(r) { return (r[c] || '') !== ''; })) cols.push(c);
+        }
+        var headers = cols.map(function(ci, i) {
+          var nm = (rawH[ci] || (i === 0 ? 'Category' : 'Col ' + (ci + 1))).replace(/\s+/g, ' ').trim();
+          seen[nm] = (seen[nm] || 0) + 1;
+          return seen[nm] > 1 ? nm + ' (' + seen[nm] + ')' : nm;
+        });
+        var records = b.rows.slice(hIdx + 1).filter(function(r) { return r.some(function(c) { return c !== ''; }); }).map(function(r) {
+          var o = {};
+          cols.forEach(function(ci, i) { var v = r[ci] || ''; o[headers[i]] = v.indexOf('#') === 0 ? '—' : v; });
+          return o;
+        });
+        return { label: b.title || ('Table ' + (idx + 1) + ' (' + headers.slice(1, 3).join(', ') + ')'), headers: headers, records: records };
+      }).filter(function(s) { return s.records.length > 0; });
+    }
 
-`;
-}
-}
-function renderTable(headers, records, labelCol) {
-const query = searchInput.value.toLowerCase();
-const filtered = query
-? records.filter(r => Object.values(r).some(v => String(v).toLowerCase().includes(query)))
-: records;
-document.getElementById('tableTitle').innerText = Detailed Records (${filtered.length} rows);
-let html = '' + headers.map(h => <th>${h}</th>).join('') + '';
-filtered.forEach(row => {
-const cls = isSummaryRow(row, labelCol) ? ' class="summary-row"' : '';
-html += <tr${cls}> + headers.map(h => <td>${row[h] ?? ''}</td>).join('') + '';
-});
-html += '';
-document.getElementById('tableContainer').innerHTML = html;
-}
-sheetSelect.addEventListener('change', e => loadSheet(e.target.value));
-sectionSelect.addEventListener('change', e => selectSection(Number(e.target.value)));
-xColSelect.addEventListener('change', updateDashboard);
-yColSelect.addEventListener('change', updateDashboard);
-searchInput.addEventListener('input', () => {
-if (activeSection) renderTable(activeSection.headers, activeSection.records, xColSelect.value);
-});
-loadSheet(SHEETS.at(0).file);
+    function loadFile(file) {
+      document.getElementById('status').innerText = 'Loading ' + file + '...';
+      fetch('./' + encodeURIComponent(file) + '?t=' + Date.now())
+        .then(function(r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.text(); })
+        .then(function(txt) {
+          sections = buildSections(parseCSV(txt));
+          secSel.innerHTML = '';
+          sections.forEach(function(s, i) { secSel.add(new Option(s.label, i)); });
+          document.getElementById('status').innerText = 'Loaded: ' + file + ' (' + sections.length + ' tables)';
+          if (sections.length) pickSection(0);
+        })
+        .catch(function(e) { document.getElementById('status').innerText = 'Error: ' + e.message; });
+    }
+
+    function pickSection(i) {
+      curSec = sections[i];
+      xSel.innerHTML = ''; ySel.innerHTML = '';
+      curSec.headers.forEach(function(h) { xSel.add(new Option(h, h)); ySel.add(new Option(h, h)); });
+      xSel.value = curSec.headers.find(function(h) { return /date|month|commodity|period/i.test(h); }) || pick(curSec.headers, 0);
+      ySel.value = curSec.headers.find(function(h) {
+        return !/s\.?no|sr\s*no/i.test(h) && curSec.records.some(function(r) { return !isNaN(toNum(r[h])); });
+      }) || pick(curSec.headers, 1) || pick(curSec.headers, 0);
+      draw();
+    }
+
+    function isSum(row, xCol) {
+      var s = (Object.keys(row).slice(0, 2).map(function(k) { return row[k]; }).join(' ') + ' ' + (row[xCol] || '')).toLowerCase();
+      return /\b(total|avg|average|upto)\b/.test(s);
+    }
+
+    function setMode(m) {
+      mode = m;
+      document.getElementById('bBar').classList.toggle('active', m === 'bar');
+      document.getElementById('bLine').classList.toggle('active', m === 'line');
+      draw();
+    }
+
+    function draw() {
+      if (!curSec) return;
+      var xCol = xSel.value, yCol = ySel.value;
+      var pts = curSec.records.filter(function(r) { return !isSum(r, xCol); })
+        .map(function(r) { return { l: r[xCol] || '—', v: toNum(r[yCol]) }; })
+        .filter(function(d) { return !isNaN(d.v); });
+
+      var fmt = function(n) { return n.toLocaleString('en-IN', { maximumFractionDigits: 2 }); };
+      if (pts.length) {
+        var sum = pts.reduce(function(a, b) { return a + b.v; }, 0);
+        var pk = pts.reduce(function(a, b) { return b.v > a.v ? b : a; }, pick(pts, 0));
+        document.getElementById('kpiBox').innerHTML =
+          '<div class="kpi"><small>Total (' + yCol + ')</small><div>' + fmt(sum) + '</div></div>' +
+          '<div class="kpi" style="border-left-color:#0d9488"><small>Average</small><div>' + fmt(sum / pts.length) + '</div></div>' +
+          '<div class="kpi" style="border-left-color:#d97706"><small>Peak (' + pk.l + ')</small><div>' + fmt(pk.v) + '</div></div>';
+      } else { document.getElementById('kpiBox').innerHTML = ''; }
+
+      document.getElementById('chartTitle').innerText = yCol + ' by ' + xCol;
+      var cBox = document.getElementById('chartBox');
+      if (!pts.length) { cBox.innerHTML = '<p style="color:#64748b">Select a numeric column in <b>4. Metric (Y)</b>.</p>'; }
+      else if (mode === 'bar') {
+        var max = Math.max.apply(null, pts.map(function(d) { return Math.abs(d.v); }).concat(1));
+        cBox.innerHTML = pts.map(function(d) {
+          var w = Math.min(100, (Math.abs(d.v) / max) * 100);
+          return '<div class="bar-row"><div class="bar-lbl" title="' + d.l + '">' + d.l + '</div>' +
+                 '<div class="bar-bg"><div class="bar-fill" style="width:' + w + '%;background:' + (d.v < 0 ? '#dc2626' : '#2563eb') + '"></div></div>' +
+                 '<div class="bar-val">' + fmt(d.v) + '</div></div>';
+        }).join('');
+      } else {
+        var W = 900, H = 250, pL = 60, pR = 20, pT = 20, pB = 40, pw = W - pL - pR, ph = H - pT - pB;
+        var minV = Math.min.apply(null, pts.map(function(d) { return d.v; }).concat(0));
+        var maxV = Math.max.apply(null, pts.map(function(d) { return d.v; }).concat(1));
+        var coords = pts.map(function(d, i) {
+          return { x: pL + (pts.length === 1 ? pw / 2 : (i / (pts.length - 1)) * pw), y: pT + ph - ((d.v - minV) / ((maxV - minV) || 1)) * ph, l: d.l, v: d.v };
+        });
+        var path = coords.map(function(p, i) { return (i ? 'L' : 'M') + p.x.toFixed(1) + ',' + p.y.toFixed(1); }).join(' ');
+        var dots = coords.map(function(p) { return '<circle cx="' + p.x + '" cy="' + p.y + '" r="4" fill="#1d4ed8"><title>' + p.l + ': ' + fmt(p.v) + '</title></circle>'; }).join('');
+        var st = Math.ceil(coords.length / 8);
+        var lbls = coords.filter(function(_, i) { return i % st === 0; }).map(function(p) { return '<text x="' + p.x + '" y="' + (H - 10) + '" font-size="11" text-anchor="middle" fill="#64748b">' + p.l + '</text>'; }).join('');
+        cBox.innerHTML = '<svg viewBox="0 0 ' + W + ' ' + H + '" style="width:100%;height:auto"><line x1="' + pL + '" y1="' + (pT + ph) + '" x2="' + (W - pR) + '" y2="' + (pT + ph) + '" stroke="#cbd5e1"/><text x="' + (pL - 6) + '" y="' + (pT + 5) + '" font-size="11" text-anchor="end" fill="#64748b">' + fmt(maxV) + '</text><path d="' + path + '" fill="none" stroke="#2563eb" stroke-width="2.5"/>' + dots + lbls + '</svg>';
+      }
+
+      var q = qInput.value.toLowerCase();
+      var rows = q ? curSec.records.filter(function(r) { return curSec.headers.some(function(h) { return String(r[h]).toLowerCase().indexOf(q) !== -1; }); }) : curSec.records;
+      document.getElementById('tblTitle').innerText = 'Records (' + rows.length + ' rows)';
+      document.getElementById('tblBox').innerHTML = '<table><thead><tr>' + curSec.headers.map(function(h) { return '<th>' + h + '</th>'; }).join('') + '</tr></thead><tbody>' +
+        rows.map(function(r) { return '<tr class="' + (isSum(r, xCol) ? 'sum' : '') + '">' + curSec.headers.map(function(h) { return '<td>' + (r[h] || '') + '</td>'; }).join('') + '</tr>'; }).join('') + '</tbody></table>';
+    }
+
+    sheetSel.onchange = function() { loadFile(sheetSel.value); };
+    secSel.onchange = function() { pickSection(Number(secSel.value)); };
+    xSel.onchange = draw; ySel.onchange = draw; qInput.oninput = draw;
+    loadFile(pick(SHEETS, 0).file);
+  </script>
+</body>
+</html>
